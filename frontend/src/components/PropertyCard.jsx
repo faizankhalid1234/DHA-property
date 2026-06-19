@@ -33,14 +33,14 @@ export default function PropertyCard({ property, index = 0 }) {
           <MapPin size={14} />
           <span>{property.blockName}</span>
         </div>
-        <h3 className="text-xl font-bold text-navy mb-2">{property.propertyNumber}</h3>
-        <p className="text-gray-500 text-sm mb-4 line-clamp-2">{property.description}</p>
+        <h3 className="text-xl font-bold text-heading mb-2">{property.propertyNumber}</h3>
+        <p className="text-muted text-sm mb-4 line-clamp-2">{property.description}</p>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-2xl font-bold text-gold">
               PKR {(property.price / 1000000).toFixed(1)}M
             </p>
-            <p className="text-xs text-gray-400 flex items-center gap-1">
+            <p className="text-xs text-faint flex items-center gap-1">
               <Maximize2 size={12} /> {property.plotSize}
             </p>
           </div>

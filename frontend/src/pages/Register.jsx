@@ -78,7 +78,7 @@ export default function Register() {
         <form onSubmit={handleSubmit} className="space-y-3">
           {fields.map(([key, label, type, placeholder]) => (
             <div key={key}>
-              <label className="block text-sm font-medium text-navy mb-1">{label}</label>
+              <label className="label-text mb-1">{label}</label>
               <input
                 type={type}
                 required
@@ -91,7 +91,7 @@ export default function Register() {
           ))}
 
           <div>
-            <label className="block text-sm font-medium text-navy mb-1">Password</label>
+            <label className="label-text mb-1">Password</label>
             <div className="relative">
               <input
                 type={showPass ? 'text' : 'password'}
@@ -103,14 +103,14 @@ export default function Register() {
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
               />
               <button type="button" onClick={() => setShowPass(!showPass)}
-                className="absolute right-3 top-3 text-gray-400">
+                className="absolute right-3 top-3 text-faint">
                 {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-navy mb-1">Confirm Password</label>
+            <label className="label-text mb-1">Confirm Password</label>
             <input
               type="password"
               required
@@ -126,7 +126,7 @@ export default function Register() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
+        <p className="text-center text-sm text-muted mt-4">
           Already have an account?{' '}
           <Link to="/login" className="text-gold font-semibold hover:underline">
             Sign in

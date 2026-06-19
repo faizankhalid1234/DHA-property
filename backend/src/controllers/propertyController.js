@@ -6,6 +6,7 @@ import OwnershipPeriod from '../models/OwnershipPeriod.js';
 import { generatePropertyQR } from '../utils/qrcode.js';
 import { asyncHandler } from '../middleware/validate.js';
 import { createNotification } from '../utils/notifications.js';
+import { recalculateBlockStats } from '../utils/blockStats.js';
 
 const generatePropertyId = async () => {
   const count = await Property.countDocuments();
@@ -105,13 +106,7 @@ export const createProperty = asyncHandler(async (req, res) => {
   await property.save();
 
   if (property.block) {
-    await Block.findByIdAndUpdate(property.block, {
-      $inc: {
-        totalPlots: property.propertyType === 'plot' ? 1 : 0,
-        totalHouses: property.propertyType === 'house' ? 1 : 0,
-        availableProperties: property.status !== 'inactive' ? 1 : 0,
-      },
-    });
+    await recalculateBlockStats(property.block);
   }
 
   res.status(201).json({ success: true, data: property });
@@ -145,7 +140,11 @@ export const deleteProperty = asyncHandler(async (req, res) => {
   if (!property) {
     return res.status(404).json({ success: false, message: 'Property not found' });
   }
+  const blockId = property.block;
   await property.deleteOne();
+  if (blockId) {
+    await recalculateBlockStats(blockId);
+  }
   res.json({ success: true, message: 'Property deleted' });
 });
 

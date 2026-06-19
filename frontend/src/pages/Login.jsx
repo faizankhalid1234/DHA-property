@@ -44,7 +44,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-navy mb-1">Email</label>
+            <label className="label-text mb-1">Email</label>
             <input
               type="email"
               required
@@ -56,7 +56,7 @@ export default function Login() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-navy mb-1">Password</label>
+            <label className="label-text mb-1">Password</label>
             <div className="relative">
               <input
                 type={showPass ? 'text' : 'password'}
@@ -70,7 +70,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
-                className="absolute right-3 top-3 text-gray-400 hover:text-navy"
+                className="absolute right-3 top-3 text-faint hover:text-heading"
               >
                 {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -81,14 +81,14 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-sm text-muted mt-6">
           Don&apos;t have an account?{' '}
           <Link to="/register" className="text-gold font-semibold hover:underline">
             Register
           </Link>
         </p>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded-xl text-xs text-gray-600 border border-blue-100">
+        <div className="mt-4 info-box">
           <strong>Demo Login:</strong><br />
           Email: ahmed@example.com<br />
           Password: Customer@123

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
@@ -20,6 +20,21 @@ export default function Blocks() {
     onError: (err) => toast.error(err.response?.data?.message || 'Failed'),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => api.delete(`/blocks/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['blocks']);
+      toast.success('Block deleted');
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Cannot delete this block'),
+  });
+
+  const handleDelete = (block) => {
+    if (window.confirm(`Delete block "${block.name}"? This cannot be undone.`)) {
+      deleteMutation.mutate(block._id);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -34,8 +49,19 @@ export default function Blocks() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? <p>Loading...</p> : blocks.map((block) => (
-          <div key={block._id} className="stat-card">
-            <h3 className="text-lg font-bold text-navy">{block.name}</h3>
+          <div key={block._id} className="stat-card relative">
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <h3 className="text-lg font-bold text-navy">{block.name}</h3>
+              <button
+                type="button"
+                onClick={() => handleDelete(block)}
+                disabled={deleteMutation.isPending}
+                className="admin-action-btn text-red-500 shrink-0"
+                title="Delete block"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
             <p className="text-xs text-gray-400 mb-4">{block.description}</p>
             <div className="grid grid-cols-2 gap-3 text-center">
               <div className="bg-blue-50 rounded-lg p-2">

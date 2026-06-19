@@ -14,16 +14,41 @@ const STATUS_OPTIONS = [
   { value: 'pending', label: '🟡 Pending', desc: 'Verification or documentation pending' },
 ];
 
+const PLOT_SIZE_OPTIONS = ['5 Marla', '10 Marla', '1 Kanal', '2 Kanal', 'Custom Size'];
+
+/** Standard DHA plot dimensions (width × length in feet) */
+const PLOT_DIMENSIONS = {
+  '5 Marla': { width: 25, length: 45 },
+  '10 Marla': { width: 35, length: 65 },
+  '1 Kanal': { width: 50, length: 90 },
+  '2 Kanal': { width: 100, length: 90 },
+};
+
+const emptyForm = () => {
+  const dims = PLOT_DIMENSIONS['5 Marla'];
+  return {
+    propertyNumber: '', propertyType: 'plot', blockName: '',
+    plotSize: '5 Marla', width: String(dims.width), length: String(dims.length),
+    price: '', status: 'active', description: '',
+  };
+};
+
+const handlePlotSizeChange = (plotSize, setForm) => {
+  const dims = PLOT_DIMENSIONS[plotSize];
+  setForm((prev) => ({
+    ...prev,
+    plotSize,
+    ...(dims ? { width: String(dims.width), length: String(dims.length) } : {}),
+  }));
+};
+
 export default function Properties() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [assignModal, setAssignModal] = useState(null);
   const [recordsModal, setRecordsModal] = useState(null);
   const [assignForm, setAssignForm] = useState({ customerId: '', purchaseDate: '', ownershipDetails: '' });
-  const [form, setForm] = useState({
-    propertyNumber: '', propertyType: 'plot', blockName: '',
-    plotSize: '5 Marla', width: '', length: '', price: '', status: 'active', description: '',
-  });
+  const [form, setForm] = useState(emptyForm);
   const queryClient = useQueryClient();
 
   const { data: properties = [], isLoading } = useQuery({
@@ -56,7 +81,7 @@ export default function Properties() {
       queryClient.invalidateQueries(['properties']);
       toast.success('Property created — status locked permanently');
       setShowModal(false);
-      setForm({ propertyNumber: '', propertyType: 'plot', blockName: '', plotSize: '5 Marla', width: '', length: '', price: '', status: 'active', description: '' });
+      setForm(emptyForm());
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Failed'),
   });
@@ -73,7 +98,11 @@ export default function Properties() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/properties/${id}`),
-    onSuccess: () => { queryClient.invalidateQueries(['properties']); toast.success('Deleted'); },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['properties']);
+      queryClient.invalidateQueries(['blocks']);
+      toast.success('Deleted');
+    },
   });
 
   const selectedStatus = STATUS_OPTIONS.find((s) => s.value === form.status);
@@ -84,7 +113,7 @@ export default function Properties() {
         title="Property Management"
         subtitle="Add properties, assign owners, and view complete ownership history."
         action={
-          <button onClick={() => setShowModal(true)} className="admin-btn flex items-center gap-2">
+          <button onClick={() => { setForm(emptyForm()); setShowModal(true); }} className="admin-btn flex items-center gap-2">
             <Plus size={18} /> Add Property
           </button>
         }
@@ -184,15 +213,19 @@ export default function Properties() {
                   <option value="">Select Block *</option>
                   {blocks.map((b) => <option key={b._id} value={b.name}>{b.name}</option>)}
                 </select>
-                <select className="admin-input" value={form.plotSize} onChange={(e) => setForm({ ...form, plotSize: e.target.value })}>
-                  {['5 Marla', '10 Marla', '1 Kanal', '2 Kanal', 'Custom Size'].map((s) => <option key={s}>{s}</option>)}
+                <select
+                  className="admin-input"
+                  value={form.plotSize}
+                  onChange={(e) => handlePlotSizeChange(e.target.value, setForm)}
+                >
+                  {PLOT_SIZE_OPTIONS.map((s) => <option key={s}>{s}</option>)}
                 </select>
                 <input className="admin-input" type="number" placeholder="Price (PKR)" value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })} />
                 <input className="admin-input" type="number" placeholder="Width (ft)" value={form.width}
-                  onChange={(e) => setForm({ ...form, width: e.target.value })} />
+                  onChange={(e) => setForm({ ...form, plotSize: 'Custom Size', width: e.target.value })} />
                 <input className="admin-input" type="number" placeholder="Length (ft)" value={form.length}
-                  onChange={(e) => setForm({ ...form, length: e.target.value })} />
+                  onChange={(e) => setForm({ ...form, plotSize: 'Custom Size', length: e.target.value })} />
               </div>
 
               <div>

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Building2, ArrowLeft } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 export default function AuthLayout({ children, title, subtitle }) {
   return (
@@ -11,9 +12,12 @@ export default function AuthLayout({ children, title, subtitle }) {
           </div>
           <span className="font-bold">DHA Housing</span>
         </Link>
-        <Link to="/" className="flex items-center gap-1 text-sm text-white/80 hover:text-gold">
-          <ArrowLeft size={16} /> Back to Home
-        </Link>
+        <div className="flex items-center gap-2">
+          <ThemeToggle inverted />
+          <Link to="/" className="flex items-center gap-1 text-sm text-white/80 hover:text-gold">
+            <ArrowLeft size={16} /> Back to Home
+          </Link>
+        </div>
       </header>
 
       <div className="flex items-center justify-center px-4 pb-12">

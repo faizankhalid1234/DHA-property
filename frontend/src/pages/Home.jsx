@@ -50,7 +50,7 @@ export default function Home() {
             </div>
           </motion.div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-cream to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 hero-fade" />
       </section>
 
       {/* Stats */}
@@ -74,8 +74,8 @@ export default function Home() {
                 <div className={`w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
                   <stat.icon className="text-white" size={24} />
                 </div>
-                <h3 className="text-3xl font-bold text-navy">{stat.value}</h3>
-                <p className="text-gray-500 text-sm mt-1">{stat.label}</p>
+                <h3 className="text-3xl font-bold text-heading">{stat.value}</h3>
+                <p className="text-muted text-sm mt-1">{stat.label}</p>
               </motion.div>
             ))}
           </div>
@@ -87,7 +87,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="section-title">Featured <span className="gradient-text">Properties</span></h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">Discover premium plots, houses, and commercial properties in DHA's most sought-after blocks.</p>
+            <p className="text-muted max-w-2xl mx-auto">Discover premium plots, houses, and commercial properties in DHA's most sought-after blocks.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {featured.map((property, i) => (
@@ -107,8 +107,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="glass-card p-10 md:p-16 text-center border-gold/20">
             <Search className="mx-auto text-gold mb-6" size={48} />
-            <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">Verify Property Ownership Instantly</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-heading mb-4">Verify Property Ownership Instantly</h2>
+            <p className="text-body max-w-2xl mx-auto mb-8">
               Verify your property using block and plot number — check the status before you invest.
             </p>
             <Link to="/verify" className="btn-gold inline-flex items-center gap-2">
@@ -135,10 +135,10 @@ export default function Home() {
                 <div className="flex gap-1 mb-4">
                   {[...Array(t.rating)].map((_, j) => <Star key={j} size={16} className="text-gold fill-gold" />)}
                 </div>
-                <p className="text-gray-600 italic mb-6">"{t.text}"</p>
+                <p className="text-body italic mb-6">"{t.text}"</p>
                 <div>
-                  <p className="font-bold text-navy">{t.name}</p>
-                  <p className="text-sm text-gray-400">{t.role}</p>
+                  <p className="font-bold text-heading">{t.name}</p>
+                  <p className="text-sm text-faint">{t.role}</p>
                 </div>
               </motion.div>
             ))}

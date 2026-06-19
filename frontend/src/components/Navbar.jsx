@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Home, Building2, Search, User, FileText, Phone, Info, LogOut, Users } from 'lucide-react';
+import { Menu, X, Home, Building2, Search, User, Phone, Info, LogOut, Users } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/authSlice';
+import ThemeToggle from './ThemeToggle';
 
 const navLinks = [
   { path: '/', label: 'Home', icon: Home },
@@ -27,6 +28,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const onHero = location.pathname === '/' && !scrolled;
+
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       scrolled ? 'glass-nav shadow-lg' : 'bg-transparent'
@@ -38,8 +41,8 @@ export default function Navbar() {
               <span className="text-gold font-bold text-lg">D</span>
             </div>
             <div>
-              <h1 className={`font-bold text-lg ${scrolled ? 'text-navy' : 'text-white'}`}>DHA Housing</h1>
-              <p className={`text-xs ${scrolled ? 'text-gray-500' : 'text-gold-light'}`}>Scheme Management</p>
+              <h1 className={`font-bold text-lg ${onHero ? 'text-white' : 'nav-title-scrolled'}`}>DHA Housing</h1>
+              <p className={`text-xs ${onHero ? 'text-gold-light' : 'nav-subtitle-scrolled'}`}>Scheme Management</p>
             </div>
           </Link>
 
@@ -50,8 +53,8 @@ export default function Navbar() {
                 to={link.path}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   location.pathname === link.path
-                    ? 'text-gold bg-white/10'
-                    : scrolled ? 'text-navy hover:text-gold' : 'text-white/90 hover:text-gold'
+                    ? 'text-gold bg-white/10 dark:bg-slate-800/80'
+                    : onHero ? 'text-white/90 hover:text-gold' : 'nav-link-scrolled'
                 }`}
               >
                 {link.label}
@@ -59,20 +62,30 @@ export default function Navbar() {
             ))}
           </div>
 
-          {user && (
-            <div className="hidden lg:flex items-center gap-3">
-              <Link to="/dashboard" className="btn-gold text-sm px-4 py-2 flex items-center gap-2">
-                <User size={16} /> Dashboard
-              </Link>
-              <button onClick={() => dispatch(logout())} className="text-red-400 hover:text-red-300 p-2">
-                <LogOut size={18} />
-              </button>
-            </div>
-          )}
+          <div className="hidden lg:flex items-center gap-2">
+            <ThemeToggle inverted={onHero} />
+            {user && (
+              <>
+                <Link to="/dashboard" className="btn-gold text-sm px-4 py-2 flex items-center gap-2">
+                  <User size={16} /> Dashboard
+                </Link>
+                <button onClick={() => dispatch(logout())} className="text-red-400 hover:text-red-300 p-2">
+                  <LogOut size={18} />
+                </button>
+              </>
+            )}
+          </div>
 
-          <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden p-2">
-            {isOpen ? <X className={scrolled ? 'text-navy' : 'text-white'} /> : <Menu className={scrolled ? 'text-navy' : 'text-white'} />}
-          </button>
+          <div className="lg:hidden flex items-center gap-1">
+            <ThemeToggle inverted={onHero} />
+            <button onClick={() => setIsOpen(!isOpen)} className="p-2">
+              {isOpen ? (
+                <X className={onHero ? 'text-white' : 'nav-title-scrolled'} />
+              ) : (
+                <Menu className={onHero ? 'text-white' : 'nav-title-scrolled'} />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -90,7 +103,7 @@ export default function Navbar() {
                   key={link.path}
                   to={link.path}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-royal/5 text-navy"
+                  className="mobile-nav-link"
                 >
                   <link.icon size={18} />
                   {link.label}
@@ -98,8 +111,8 @@ export default function Navbar() {
               ))}
               {user && (
                 <>
-                  <hr className="my-2" />
-                  <Link to="/dashboard" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 text-navy">
+                  <hr className="my-2 dark:border-slate-700" />
+                  <Link to="/dashboard" onClick={() => setIsOpen(false)} className="mobile-nav-link">
                     <User size={18} /> Dashboard
                   </Link>
                   <button onClick={() => { dispatch(logout()); setIsOpen(false); }} className="flex items-center gap-3 px-4 py-3 text-red-500 w-full">
