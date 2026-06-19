@@ -1,26 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Search, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Shield, Search, CheckCircle, XCircle, AlertTriangle, MapPin } from 'lucide-react';
 import api from '../services/api';
 import StatusBadge from '../components/StatusBadge';
 import toast from 'react-hot-toast';
 
 export default function Verify() {
-  const [form, setForm] = useState({ fullName: '', cnic: '', propertyNumber: '' });
+  const [form, setForm] = useState({ propertyNumber: '', blockName: '' });
+  const [blocks, setBlocks] = useState([]);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    api.get('/blocks').then((r) => setBlocks(r.data.data || [])).catch(() => {});
+  }, []);
+
   const handleVerify = async (e) => {
     e.preventDefault();
+    if (!form.blockName || !form.propertyNumber.trim()) {
+      toast.error('Please select a block and enter a plot/house number');
+      return;
+    }
     setLoading(true);
     setResult(null);
     try {
       const { data } = await api.post('/properties/verify', form);
       setResult(data);
-      if (data.verified) toast.success('Property verified successfully!');
+      if (data.verified) toast.success('Property verified!');
       else toast.error(data.message);
-    } catch {
-      toast.error('Verification failed. Please try again.');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Verification failed');
     } finally {
       setLoading(false);
     }
@@ -34,7 +43,7 @@ export default function Verify() {
             <Shield className="text-gold" size={36} />
           </div>
           <h1 className="section-title">Property <span className="gradient-text">Verification</span></h1>
-          <p className="text-gray-500">Verify property ownership instantly using CNIC and property number</p>
+          <p className="text-gray-500">Verify a property using block and plot/house number</p>
         </motion.div>
 
         <motion.form
@@ -46,19 +55,31 @@ export default function Verify() {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-navy mb-2">Full Name</label>
-              <input type="text" required className="input-field" placeholder="Enter full name as per CNIC"
-                value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
+              <label className="block text-sm font-medium text-navy mb-2">
+                <MapPin size={14} className="inline mr-1" /> Block Name *
+              </label>
+              <select
+                required
+                className="input-field"
+                value={form.blockName}
+                onChange={(e) => setForm({ ...form, blockName: e.target.value })}
+              >
+                <option value="">Select a block</option>
+                {blocks.map((b) => (
+                  <option key={b._id} value={b.name}>{b.name} — {b.sector}</option>
+                ))}
+              </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-navy mb-2">CNIC Number</label>
-              <input type="text" required className="input-field" placeholder="42101-1234567-1"
-                value={form.cnic} onChange={(e) => setForm({ ...form, cnic: e.target.value })} />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-navy mb-2">Plot / House Number</label>
-              <input type="text" required className="input-field" placeholder="e.g. A-101, EB-201"
-                value={form.propertyNumber} onChange={(e) => setForm({ ...form, propertyNumber: e.target.value })} />
+              <label className="block text-sm font-medium text-navy mb-2">Plot / House Number *</label>
+              <input
+                type="text"
+                required
+                className="input-field"
+                placeholder="e.g. A-101, EB-201"
+                value={form.propertyNumber}
+                onChange={(e) => setForm({ ...form, propertyNumber: e.target.value })}
+              />
             </div>
           </div>
           <button type="submit" disabled={loading} className="btn-primary w-full mt-6 flex items-center justify-center gap-2">
@@ -80,7 +101,7 @@ export default function Verify() {
               )}
               <div>
                 <h3 className="text-xl font-bold text-navy">
-                  {result.verified ? 'Ownership Verified' : 'Verification Failed'}
+                  {result.verified ? 'Property Verified' : 'Not Found'}
                 </h3>
                 {!result.verified && <p className="text-red-500 text-sm">{result.message}</p>}
               </div>
@@ -92,8 +113,17 @@ export default function Verify() {
                   <span className="text-gray-500">Status</span>
                   <StatusBadge status={result.data.status} />
                 </div>
+
+                {result.data.saleInfo && (
+                  <div className="p-4 bg-orange-50 rounded-xl border border-orange-100">
+                    <p className="font-semibold text-orange-800 mb-2">Sale Pending — Seller / Buyer</p>
+                    <p className="text-sm"><span className="text-red-600 font-medium">Seller:</span> {result.data.saleInfo.seller}</p>
+                    <p className="text-sm"><span className="text-emerald-600 font-medium">Buyer:</span> {result.data.saleInfo.buyer}</p>
+                  </div>
+                )}
+
                 {[
-                  ['Owner Name', result.data.ownerName],
+                  ['Owner', result.data.ownerName],
                   ['Property Number', result.data.propertyNumber],
                   ['Property ID', result.data.propertyId],
                   ['Block', result.data.blockName],
@@ -109,10 +139,17 @@ export default function Verify() {
                     <span className="font-semibold text-navy capitalize">{value}</span>
                   </div>
                 ))}
+
                 {result.data.status === 'case' && (
                   <div className="flex items-center gap-2 p-4 bg-purple-50 rounded-xl text-purple-700">
                     <AlertTriangle size={18} />
-                    <span className="text-sm">This property is involved in a legal case. Contact DHA administration.</span>
+                    <span className="text-sm">Legal case — please contact DHA administration.</span>
+                  </div>
+                )}
+                {result.data.status === 'inactive' && (
+                  <div className="flex items-center gap-2 p-4 bg-red-50 rounded-xl text-red-700">
+                    <AlertTriangle size={18} />
+                    <span className="text-sm">This property has an issue — please verify carefully.</span>
                   </div>
                 )}
               </div>

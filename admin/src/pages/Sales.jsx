@@ -25,7 +25,7 @@ export default function Sales() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-navy mb-2">Pending Property Sales</h1>
-      <p className="text-gray-500 mb-6">Jab do customers same plot ke liye aate hain — yahan seller/buyer approve karein</p>
+      <p className="text-gray-500 mb-6">When two customers are involved in the same plot sale — approve seller/buyer here</p>
 
       {isLoading ? (
         <p className="text-gray-400">Loading...</p>

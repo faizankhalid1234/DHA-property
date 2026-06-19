@@ -10,6 +10,9 @@ export const loginUser = createAsyncThunk('auth/login', async (credentials, { re
     if (!data?.success || !data?.data?.token) {
       return rejectWithValue('Login failed. Invalid server response.');
     }
+    if (data.data.role !== 'customer') {
+      return rejectWithValue('This is an admin account. Use the admin panel or sign in with a customer account.');
+    }
     localStorage.setItem('dha_token', data.data.token);
     localStorage.setItem('dha_user', JSON.stringify(data.data));
     return data.data;
@@ -40,12 +43,19 @@ export const registerCustomer = createAsyncThunk('auth/register', async (userDat
   }
 });
 
-const storedUser = localStorage.getItem('dha_user');
+let parsedUser = null;
+try {
+  const stored = localStorage.getItem('dha_user');
+  if (stored) parsedUser = JSON.parse(stored);
+} catch {
+  localStorage.removeItem('dha_user');
+  localStorage.removeItem('dha_token');
+}
 
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    user: storedUser ? JSON.parse(storedUser) : null,
+    user: parsedUser,
     token: localStorage.getItem('dha_token') || null,
     loading: false,
     error: null,

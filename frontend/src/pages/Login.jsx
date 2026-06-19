@@ -19,7 +19,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email.trim() || !form.password) {
-      toast.error('Email aur password likhein');
+      toast.error('Please enter email and password');
       return;
     }
     try {
@@ -34,7 +34,7 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout title="Customer Login" subtitle="Apna DHA Housing account access karein">
+    <AuthLayout title="Customer Login" subtitle="Access your DHA Housing account">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-8">
         <div className="text-center mb-6">
           <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-royal flex items-center justify-center">
@@ -82,9 +82,9 @@ export default function Login() {
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-6">
-          Account nahi hai?{' '}
+          Don&apos;t have an account?{' '}
           <Link to="/register" className="text-gold font-semibold hover:underline">
-            Register karein
+            Register
           </Link>
         </p>
 

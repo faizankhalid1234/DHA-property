@@ -5,10 +5,10 @@ import toast from 'react-hot-toast';
 import api from '../services/api';
 
 const STATUS_OPTIONS = [
-  { value: 'active', label: '🟢 Active', desc: 'Ownership valid — sab theek hai' },
-  { value: 'inactive', label: '🔴 Inactive', desc: 'Plot/ghar mein masla ya problem hai' },
-  { value: 'case', label: '⚖️ Case', desc: 'Legal dispute — Cases section mein handle karein' },
-  { value: 'pending', label: '🟡 Pending', desc: 'Verification ya documentation pending' },
+  { value: 'active', label: '🟢 Active', desc: 'Ownership is valid' },
+  { value: 'inactive', label: '🔴 Inactive', desc: 'Property has an issue or problem' },
+  { value: 'case', label: '⚖️ Case', desc: 'Legal dispute — handle in Cases section' },
+  { value: 'pending', label: '🟡 Pending', desc: 'Verification or documentation pending' },
 ];
 
 const statusColors = {
@@ -183,7 +183,7 @@ export default function Properties() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-navy mb-1">Add New Property</h2>
-            <p className="text-xs text-amber-600 mb-4 flex items-center gap-1"><Lock size={12} /> Status ek dafa set hone ke baad change nahi ho sakta</p>
+            <p className="text-xs text-amber-600 mb-4 flex items-center gap-1"><Lock size={12} /> Status cannot be changed once set</p>
             <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <input className="admin-input" placeholder="Property Number *" required value={form.propertyNumber}
@@ -242,7 +242,7 @@ export default function Properties() {
             <form onSubmit={(e) => { e.preventDefault(); assignMutation.mutate({ id: assignModal._id, data: assignForm }); }} className="space-y-3">
               <select className="admin-input" required value={assignForm.customerId} onChange={(e) => setAssignForm({ ...assignForm, customerId: e.target.value })}>
                 <option value="">Select Customer *</option>
-                {customers.map((c) => <option key={c._id} value={c._id}>{c.fullName} — {c.cnic}</option>)}
+                {customers.map((c) => <option key={c._id} value={c._id}>{c.fullName} — {c.phone}</option>)}
               </select>
               <input type="date" className="admin-input" required value={assignForm.purchaseDate}
                 onChange={(e) => setAssignForm({ ...assignForm, purchaseDate: e.target.value })} />
@@ -271,7 +271,7 @@ export default function Properties() {
               <select className="admin-input" required value={transferForm.newOwnerId} onChange={(e) => setTransferForm({ ...transferForm, newOwnerId: e.target.value })}>
                 <option value="">New Owner (Customer) *</option>
                 {customers.filter((c) => c._id !== (transferModal.currentOwner?._id || transferModal.currentOwner)).map((c) => (
-                  <option key={c._id} value={c._id}>{c.fullName} — {c.cnic}</option>
+                  <option key={c._id} value={c._id}>{c.fullName} — {c.phone}</option>
                 ))}
               </select>
               <input type="date" className="admin-input" required value={transferForm.transferDate}

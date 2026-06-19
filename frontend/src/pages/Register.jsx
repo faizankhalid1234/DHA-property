@@ -31,19 +31,19 @@ export default function Register() {
     e.preventDefault();
 
     if (!validateCNIC(form.cnic)) {
-      toast.error('CNIC 13 digits honi chahiye — 42101-1234567-1');
+      toast.error('CNIC must be 13 digits — e.g. 42101-1234567-1');
       return;
     }
     if (form.password.length < 6) {
-      toast.error('Password kam az kam 6 characters');
+      toast.error('Password must be at least 6 characters');
       return;
     }
     if (form.password !== form.confirmPassword) {
-      toast.error('Password match nahi kar raha');
+      toast.error('Passwords do not match');
       return;
     }
     if (form.phone.replace(/\D/g, '').length < 10) {
-      toast.error('Valid phone number likhein');
+      toast.error('Please enter a valid phone number');
       return;
     }
 
@@ -51,7 +51,7 @@ export default function Register() {
       const { confirmPassword, ...data } = form;
       const result = await dispatch(registerCustomer(data)).unwrap();
       if (result?.token) {
-        toast.success('Account ban gaya! Welcome!');
+        toast.success('Account created! Welcome!');
         navigate('/dashboard', { replace: true });
       }
     } catch (err) {
@@ -115,7 +115,7 @@ export default function Register() {
               type="password"
               required
               className="input-field"
-              placeholder="Password dobara likhein"
+              placeholder="Re-enter password"
               value={form.confirmPassword}
               onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
             />
@@ -127,9 +127,9 @@ export default function Register() {
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-4">
-          Pehle se account hai?{' '}
+          Already have an account?{' '}
           <Link to="/login" className="text-gold font-semibold hover:underline">
-            Login karein
+            Sign in
           </Link>
         </p>
       </motion.div>

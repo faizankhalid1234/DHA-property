@@ -109,7 +109,7 @@ export default function Home() {
             <Search className="mx-auto text-gold mb-6" size={48} />
             <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4">Verify Property Ownership Instantly</h2>
             <p className="text-gray-600 max-w-2xl mx-auto mb-8">
-              Enter your CNIC and property number to verify ownership before making any investment decision. Our secure verification system protects your investment.
+              Verify your property using block and plot number — check the status before you invest.
             </p>
             <Link to="/verify" className="btn-gold inline-flex items-center gap-2">
               <Shield size={18} /> Start Verification

@@ -1,8 +1,10 @@
 import http from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
-import connectDB from './config/db.js';
+import connectDB, { disconnectDB } from './config/db.js';
 import { runSeed } from './utils/seedData.js';
+import { cleanupDemoData } from './utils/cleanupDemoData.js';
+import User from './models/User.js';
 import app from './app.js';
 
 dotenv.config();
@@ -11,9 +13,14 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    const usedMemoryDb = await connectDB();
+    await connectDB();
 
-    if (usedMemoryDb || process.env.AUTO_SEED === 'true') {
+    if (process.env.CLEAN_DEMO_ON_START === 'true') {
+      await cleanupDemoData();
+    }
+
+    const userCount = await User.countDocuments();
+    if (userCount === 0) {
       await runSeed();
     }
 
@@ -49,6 +56,22 @@ const startServer = async () => {
       }
       throw err;
     });
+
+    const shutdown = async (signal, stopMongo = true) => {
+      console.log(`\n${signal} — closing server...`);
+      server.close(async () => {
+        await disconnectDB(stopMongo);
+        if (signal === 'SIGUSR2') {
+          process.kill(process.pid, 'SIGUSR2');
+        } else {
+          process.exit(0);
+        }
+      });
+    };
+
+    process.on('SIGINT', () => shutdown('SIGINT', true));
+    process.on('SIGTERM', () => shutdown('SIGTERM', true));
+    process.once('SIGUSR2', () => shutdown('SIGUSR2', false));
   } catch (error) {
     console.error('❌ Failed to start server:', error.message);
     process.exit(1);

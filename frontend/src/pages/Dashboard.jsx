@@ -19,7 +19,7 @@ export default function Dashboard() {
     setLoading(true);
     api.get('/properties/my-properties')
       .then((r) => setData(r.data.data || { current: [], past: [], saleRequests: [] }))
-      .catch(() => toast.error('Data load nahi hua'))
+      .catch(() => toast.error('Failed to load data'))
       .finally(() => setLoading(false));
   };
 
@@ -32,14 +32,14 @@ export default function Dashboard() {
   const handleLookup = async (e) => {
     e.preventDefault();
     if (!lookup.propertyNumber || !lookup.blockName) {
-      toast.error('Plot number aur block name likhein');
+      toast.error('Please enter plot number and block name');
       return;
     }
     try {
       const { data: res } = await api.get('/sales/lookup', { params: lookup });
       setLookupResult(res.data);
     } catch {
-      toast.error('Property nahi mili');
+      toast.error('Property not found');
       setLookupResult(null);
     }
   };
@@ -47,7 +47,7 @@ export default function Dashboard() {
   const handleBuyRequest = async (propertyId) => {
     try {
       await api.post('/sales/request', { propertyId });
-      toast.success('Buy request admin ko bhej di — Seller/Buyer pending');
+      toast.success('Buy request sent to admin — seller/buyer approval pending');
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Request failed');
@@ -68,7 +68,7 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-3xl font-bold text-navy">Welcome, {user.name}</h1>
-          <p className="text-gray-500">Apni properties, buy/sell history aur ownership dates dekhein</p>
+          <p className="text-gray-500">View your properties, buy/sell history, and ownership dates</p>
         </motion.div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
@@ -102,7 +102,7 @@ export default function Dashboard() {
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-navy mb-4">Current Owned Properties</h3>
               {!data.current?.length ? (
-                <p className="text-gray-500 text-center py-10">Abhi koi property assigned nahi</p>
+                <p className="text-gray-500 text-center py-10">No properties assigned yet</p>
               ) : data.current.map((p) => (
                 <div key={p._id} className="p-5 bg-gray-50 rounded-xl border border-gray-100">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -135,7 +135,7 @@ export default function Dashboard() {
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-navy mb-4">Sold / Past Properties</h3>
               {!data.past?.length ? (
-                <p className="text-gray-500 text-center py-10">Koi past ownership record nahi</p>
+                <p className="text-gray-500 text-center py-10">No past ownership records</p>
               ) : data.past.map((period) => (
                 <div key={period._id} className="p-5 bg-gray-50 rounded-xl border-l-4 border-gold">
                   <h4 className="font-bold text-navy">{period.propertyNumber} — {period.blockName}</h4>
@@ -159,7 +159,7 @@ export default function Dashboard() {
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-navy mb-4">Buy / Sell Requests</h3>
               {!data.saleRequests?.length ? (
-                <p className="text-gray-500 text-center py-10">Koi pending sale request nahi</p>
+                <p className="text-gray-500 text-center py-10">No pending sale requests</p>
               ) : data.saleRequests.map((r) => (
                 <div key={r._id} className="p-5 bg-orange-50 rounded-xl border border-orange-100">
                   <p className="font-mono text-xs text-royal">{r.requestNumber}</p>
@@ -176,7 +176,7 @@ export default function Dashboard() {
 
           {activeTab === 'lookup' && (
             <div>
-              <h3 className="text-lg font-bold text-navy mb-4">Apni Property Dhundhein</h3>
+              <h3 className="text-lg font-bold text-navy mb-4">Find My Property</h3>
               <form onSubmit={handleLookup} className="flex flex-col md:flex-row gap-3 mb-6">
                 <input className="input-field flex-1" placeholder="Plot / House Number (e.g. A-101)" required
                   value={lookup.propertyNumber} onChange={(e) => setLookup({ ...lookup, propertyNumber: e.target.value })} />
@@ -194,7 +194,7 @@ export default function Dashboard() {
                       <StatusBadge status={lookupResult.property?.status} />
                     </div>
                   )) : (
-                    <p className="text-gray-500">Aap ki ownership record nahi mili is plot par</p>
+                    <p className="text-gray-500">No ownership record found for this plot</p>
                   )}
 
                   {lookupResult.saleInfo && (
@@ -206,7 +206,7 @@ export default function Dashboard() {
 
                   {lookupResult.property && !lookupResult.isOwner && lookupResult.property.currentOwner && lookupResult.property.marketStatus !== 'sale_pending' && (
                     <button onClick={() => handleBuyRequest(lookupResult.property._id)} className="btn-gold">
-                      Is Property ko Buy karna chahte hain? Request bhejein
+                      Want to buy this property? Submit a request
                     </button>
                   )}
                 </div>

@@ -58,34 +58,16 @@ export default function Navbar() {
             ))}
           </div>
 
-          <div className="hidden lg:flex items-center gap-3">
-            {user ? (
-              <>
-                <Link to="/dashboard" className="btn-gold text-sm px-4 py-2 flex items-center gap-2">
-                  <User size={16} /> Dashboard
-                </Link>
-                <button onClick={() => dispatch(logout())} className="text-red-400 hover:text-red-300 p-2">
-                  <LogOut size={18} />
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className={`text-sm font-semibold px-4 py-2 rounded-lg border ${
-                    scrolled
-                      ? 'border-royal text-royal hover:bg-royal hover:text-white'
-                      : 'border-white/40 text-white hover:bg-white/10'
-                  }`}
-                >
-                  Login
-                </Link>
-                <Link to="/register" className="btn-gold text-sm px-4 py-2">
-                  Sign Up
-                </Link>
-              </>
-            )}
-          </div>
+          {user && (
+            <div className="hidden lg:flex items-center gap-3">
+              <Link to="/dashboard" className="btn-gold text-sm px-4 py-2 flex items-center gap-2">
+                <User size={16} /> Dashboard
+              </Link>
+              <button onClick={() => dispatch(logout())} className="text-red-400 hover:text-red-300 p-2">
+                <LogOut size={18} />
+              </button>
+            </div>
+          )}
 
           <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden p-2">
             {isOpen ? <X className={scrolled ? 'text-navy' : 'text-white'} /> : <Menu className={scrolled ? 'text-navy' : 'text-white'} />}
@@ -113,20 +95,15 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              <hr className="my-2" />
-              {user ? (
+              {user && (
                 <>
+                  <hr className="my-2" />
                   <Link to="/dashboard" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 text-navy">
                     <User size={18} /> Dashboard
                   </Link>
                   <button onClick={() => { dispatch(logout()); setIsOpen(false); }} className="flex items-center gap-3 px-4 py-3 text-red-500 w-full">
                     <LogOut size={18} /> Logout
                   </button>
-                </>
-              ) : (
-                <>
-                  <Link to="/login" onClick={() => setIsOpen(false)} className="block px-4 py-3 text-navy">Login</Link>
-                  <Link to="/register" onClick={() => setIsOpen(false)} className="block px-4 py-3 text-gold font-semibold">Register</Link>
                 </>
               )}
             </div>

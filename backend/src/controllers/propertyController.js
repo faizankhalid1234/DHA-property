@@ -210,40 +210,50 @@ export const assignProperty = asyncHandler(async (req, res) => {
 });
 
 export const verifyProperty = asyncHandler(async (req, res) => {
-  const { fullName, cnic, propertyNumber } = req.body;
+  const { propertyNumber, blockName } = req.body;
 
-  const customer = await Customer.findOne({
-    cnic: { $regex: cnic.replace(/[-\s]/g, ''), $options: 'i' },
-    fullName: { $regex: fullName, $options: 'i' },
-  });
-
-  if (!customer) {
-    return res.json({
-      success: true,
-      verified: false,
-      message: 'No matching ownership record found',
+  if (!propertyNumber?.trim() || !blockName?.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please select plot/house number and block',
     });
   }
 
   const property = await Property.findOne({
-    propertyNumber,
-    currentOwner: customer._id,
-  }).populate('block');
+    propertyNumber: { $regex: `^${propertyNumber.trim()}$`, $options: 'i' },
+    blockName: { $regex: `^${blockName.trim()}$`, $options: 'i' },
+  })
+    .populate('currentOwner', 'fullName cnic phone')
+    .populate('block', 'name sector');
 
   if (!property) {
     return res.json({
       success: true,
       verified: false,
-      message: 'Property not found under this owner',
+      message: 'No plot/house number found in this block',
     });
+  }
+
+  let saleInfo = null;
+  if (property.marketStatus === 'sale_pending' && property.activeSaleRequest) {
+    const SaleRequest = (await import('../models/SaleRequest.js')).default;
+    const sale = await SaleRequest.findById(property.activeSaleRequest);
+    if (sale) {
+      saleInfo = {
+        seller: sale.sellerName,
+        buyer: sale.buyerName,
+        requestNumber: sale.requestNumber,
+        status: sale.status,
+      };
+    }
   }
 
   res.json({
     success: true,
     verified: true,
     data: {
-      ownerName: customer.fullName,
-      ownerCnic: customer.cnic,
+      ownerName: property.ownerName || property.currentOwner?.fullName || 'Unassigned',
+      ownerCnic: property.currentOwner?.cnic || '—',
       propertyNumber: property.propertyNumber,
       propertyId: property.propertyId,
       blockName: property.blockName,
@@ -255,7 +265,10 @@ export const verifyProperty = asyncHandler(async (req, res) => {
       plotSize: property.plotSize,
       purchaseDate: property.purchaseDate,
       status: property.status,
+      marketStatus: property.marketStatus,
       ownershipDetails: property.ownershipDetails,
+      hasOwner: !!property.currentOwner,
+      saleInfo,
     },
   });
 });

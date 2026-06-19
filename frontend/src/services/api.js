@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000,
 });
@@ -31,9 +33,9 @@ api.interceptors.response.use(
 export const getApiError = (error) => {
   if (error.response?.data?.message) return error.response.data.message;
   if (error.response?.data?.errors?.[0]?.msg) return error.response.data.errors[0].msg;
-  if (error.code === 'ECONNABORTED') return 'Server slow hai. Backend check karein.';
-  if (!error.response) return 'Backend server nahi chal raha. Pehle: cd backend && npm run dev';
-  return 'Kuch galat ho gaya. Dobara try karein.';
+  if (error.code === 'ECONNABORTED') return 'Server is slow. Please check the backend.';
+  if (!error.response) return 'Cannot connect to backend. Run: cd backend && npm run dev';
+  return 'Something went wrong. Please try again.';
 };
 
 export default api;

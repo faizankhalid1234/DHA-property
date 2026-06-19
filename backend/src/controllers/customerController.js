@@ -50,33 +50,58 @@ export const getCustomer = asyncHandler(async (req, res) => {
 export const createCustomer = asyncHandler(async (req, res) => {
   const { fullName, fatherName, cnic, phone, email, address, password, profileImage } = req.body;
 
-  if (!validateCNIC(cnic)) {
-    return res.status(400).json({ success: false, message: 'Invalid CNIC format' });
+  const normalizedEmail = email?.trim().toLowerCase();
+  const normalizedPhone = phone?.trim();
+
+  if (!fullName?.trim() || !normalizedEmail || !normalizedPhone || !address?.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Full name, email, phone, and address are required',
+    });
   }
 
-  const formattedCnic = formatCNIC(cnic);
-  const existing = await Customer.findOne({ $or: [{ cnic: formattedCnic }, { email }] });
-  if (existing) {
-    return res.status(400).json({ success: false, message: 'Customer already exists' });
+  let formattedCnic;
+  if (cnic?.trim()) {
+    if (!validateCNIC(cnic)) {
+      return res.status(400).json({ success: false, message: 'Invalid CNIC format' });
+    }
+    formattedCnic = formatCNIC(cnic);
+    const byCnic = await Customer.findOne({ cnic: formattedCnic });
+    if (byCnic) {
+      return res.status(400).json({ success: false, message: 'A customer with this CNIC already exists' });
+    }
+  }
+
+  const existingCustomer = await Customer.findOne({ email: normalizedEmail });
+  if (existingCustomer) {
+    return res.status(400).json({ success: false, message: 'A customer with this email already exists' });
+  }
+
+  const existingUser = await User.findOne({ email: normalizedEmail });
+  if (existingUser) {
+    return res.status(400).json({
+      success: false,
+      message: 'This email is already registered. Use a different email address.',
+    });
   }
 
   const customer = await Customer.create({
-    fullName,
-    fatherName,
-    cnic: formattedCnic,
-    phone,
-    email,
-    address,
+    fullName: fullName.trim(),
+    ...(fatherName?.trim() && { fatherName: fatherName.trim() }),
+    ...(formattedCnic && { cnic: formattedCnic }),
+    phone: normalizedPhone,
+    email: normalizedEmail,
+    address: address.trim(),
     profileImage,
     createdBy: req.user._id,
   });
 
-  if (password) {
+  if (password?.trim()) {
     const user = await User.create({
-      name: fullName,
-      email,
-      password,
-      phone,
+      name: fullName.trim(),
+      email: normalizedEmail,
+      password: password.trim(),
+      phone: normalizedPhone,
       role: 'customer',
       customerRef: customer._id,
     });

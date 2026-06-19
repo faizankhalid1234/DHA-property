@@ -1,7 +1,73 @@
+# Dependencies
 node_modules/
+**/node_modules/
+
+# Build output
 dist/
+build/
+**/dist/
+**/build/
+.vite/
+*.tsbuildinfo
+
+# Environment & secrets
 .env
-.env.local
+.env.*
+!.env.example
+**/.env
+**/.env.local
+**/.env.development
+**/.env.production
+
+# Logs
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
 .DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# IDE / editor
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.cursor/
+
+# Uploads & user content
 uploads/
+**/uploads/
+
+# Local database files (MongoDB persistent storage)
+backend/data/
+**/mongodb-data/
+*.lock
+WiredTiger*
+*.wt
+
+# MongoDB memory server cache
+.mongo-binaries/
+.mongodb/
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Temp files
+tmp/
+temp/
+*.tmp
+.cache/
+
+# Package manager
+.pnpm-store/
+.yarn/
+.pnp.*

@@ -3,8 +3,8 @@ import mongoose from 'mongoose';
 const customerSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true, trim: true },
-    fatherName: { type: String, required: true, trim: true },
-    cnic: { type: String, required: true, unique: true, trim: true },
+    fatherName: { type: String, trim: true, default: '' },
+    cnic: { type: String, trim: true },
     phone: { type: String, required: true, trim: true },
     email: { type: String, required: true, lowercase: true, trim: true },
     address: { type: String, required: true },
@@ -19,6 +19,11 @@ const customerSchema = new mongoose.Schema(
 );
 
 customerSchema.index({ fullName: 'text', email: 'text' });
+customerSchema.index({ email: 1 }, { unique: true });
+customerSchema.index(
+  { cnic: 1 },
+  { unique: true, partialFilterExpression: { cnic: { $type: 'string', $ne: '' } } }
+);
 
 const Customer = mongoose.model('Customer', customerSchema);
 export default Customer;
