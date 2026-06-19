@@ -43,7 +43,7 @@ export default function Properties() {
               <Search className="absolute left-3 top-3.5 text-gray-400" size={18} />
               <input
                 type="text"
-                placeholder="Search by number, block, sector..."
+                placeholder="Search by number or block..."
                 className="input-field pl-10"
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}

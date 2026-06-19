@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Building2, Users, Grid3X3, ArrowRightLeft,
-  Scale, FileText, BarChart3, Bell, LogOut, Menu, X, Shield,
+  LayoutDashboard, Building2, Users, Grid3X3, History,
+  Scale, FileText, BarChart3, LogOut, Menu, X, Shield,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -11,8 +11,7 @@ const navItems = [
   { path: '/properties', label: 'Properties', icon: Building2 },
   { path: '/customers', label: 'Customers', icon: Users },
   { path: '/blocks', label: 'Blocks', icon: Grid3X3 },
-  { path: '/transfers', label: 'Transfers', icon: ArrowRightLeft },
-  { path: '/sales', label: 'Pending Sales', icon: Bell },
+  { path: '/transfers', label: 'Ownership Records', icon: History },
   { path: '/cases', label: 'Cases', icon: Scale },
   { path: '/documents', label: 'Documents', icon: FileText },
   { path: '/reports', label: 'Reports', icon: BarChart3 },
@@ -41,8 +40,8 @@ export default function Sidebar() {
               <Shield className="text-gold" size={20} />
             </div>
             <div>
-              <h1 className="font-bold text-sm">DHA Admin</h1>
-              <p className="text-xs text-gray-400 capitalize">{user?.role?.replace('_', ' ')}</p>
+              <h1 className="font-bold text-base text-white">DHA Admin</h1>
+              <p className="text-sm text-slate-400 capitalize">{user?.role?.replace('_', ' ')}</p>
             </div>
           </div>
         </div>

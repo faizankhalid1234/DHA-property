@@ -33,7 +33,7 @@ export default function PropertyDetail() {
             <div className="absolute bottom-6 left-6">
               <StatusBadge status={property.status} />
               <h1 className="text-3xl md:text-4xl font-bold text-white mt-2">{property.propertyNumber}</h1>
-              <p className="text-gold">{property.blockName} • {property.sectorName}</p>
+              <p className="text-gold">{property.blockName}</p>
             </div>
           </div>
 

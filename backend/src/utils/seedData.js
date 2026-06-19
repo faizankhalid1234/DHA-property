@@ -34,11 +34,11 @@ export const runSeed = async ({ reset = false } = {}) => {
   });
 
   await Block.insertMany([
-    { name: 'Block A', sector: 'Sector 1', description: 'Residential Block A', createdBy: superAdmin._id },
-    { name: 'Block B', sector: 'Sector 2', description: 'Residential Block B', createdBy: superAdmin._id },
-    { name: 'Executive Block', sector: 'Sector 3', description: 'Premium Executive Block', createdBy: superAdmin._id },
-    { name: 'Overseas Block', sector: 'Sector 4', description: 'Overseas Pakistanis Block', createdBy: superAdmin._id },
-    { name: 'Commercial Block', sector: 'Sector 5', description: 'Commercial Properties', createdBy: superAdmin._id },
+    { name: 'Block A', description: 'Residential Block A', createdBy: superAdmin._id },
+    { name: 'Block B', description: 'Residential Block B', createdBy: superAdmin._id },
+    { name: 'Executive Block', description: 'Premium Executive Block', createdBy: superAdmin._id },
+    { name: 'Overseas Block', description: 'Overseas Pakistanis Block', createdBy: superAdmin._id },
+    { name: 'Commercial Block', description: 'Commercial Properties', createdBy: superAdmin._id },
   ]);
 
   console.log('✅ Database seeded successfully!');

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Home, Building2, Search, User, FileText, Phone, Info, LogOut } from 'lucide-react';
+import { Menu, X, Home, Building2, Search, User, FileText, Phone, Info, LogOut, Users } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/authSlice';
 
@@ -9,6 +9,7 @@ const navLinks = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/properties', label: 'Properties', icon: Building2 },
   { path: '/verify', label: 'Verify', icon: Search },
+  { path: '/ownership-history', label: 'Owner History', icon: Users },
   { path: '/about', label: 'About', icon: Info },
   { path: '/contact', label: 'Contact', icon: Phone },
 ];

@@ -12,7 +12,6 @@ import Transfers from './pages/Transfers';
 import Cases from './pages/Cases';
 import Documents from './pages/Documents';
 import Reports from './pages/Reports';
-import Sales from './pages/Sales';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30000 } },
@@ -29,7 +28,6 @@ function AppRoutes() {
         <Route path="/customers" element={<Customers />} />
         <Route path="/blocks" element={<Blocks />} />
         <Route path="/transfers" element={<Transfers />} />
-        <Route path="/sales" element={<Sales />} />
         <Route path="/cases" element={<Cases />} />
         <Route path="/documents" element={<Documents />} />
         <Route path="/reports" element={<Reports />} />

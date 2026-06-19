@@ -3,22 +3,22 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Trash2, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import PageHeader from '../components/PageHeader';
 
 export default function Customers() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
-    fullName: '', phone: '', email: '', address: '', password: '',
+    fullName: '', phone: '', email: '', address: '',
   });
 
-  const emptyForm = { fullName: '', phone: '', email: '', address: '', password: '' };
+  const emptyForm = { fullName: '', phone: '', email: '', address: '' };
 
   const formFields = [
     { key: 'fullName', label: 'Full Name', required: true },
-    { key: 'phone', label: 'Phone', required: true },
-    { key: 'email', label: 'Email', required: true, type: 'email' },
+    { key: 'phone', label: 'Phone Number', required: true },
+    { key: 'email', label: 'Email Address', required: true, type: 'email' },
     { key: 'address', label: 'Address', required: true },
-    { key: 'password', label: 'Password (optional)', required: false, type: 'password' },
   ];
   const queryClient = useQueryClient();
 
@@ -29,9 +29,10 @@ export default function Customers() {
 
   const createMutation = useMutation({
     mutationFn: (data) => api.post('/customers', data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries(['customers']);
-      toast.success('Customer created');
+      queryClient.invalidateQueries(['customers-list']);
+      toast.success(res.data?.message || 'Customer created — they can register with this email');
       setShowModal(false);
       setForm(emptyForm);
     },
@@ -51,80 +52,93 @@ export default function Customers() {
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-navy">Customer Management</h1>
-          <p className="text-gray-500">Add, edit, and manage customers</p>
-        </div>
-        <button onClick={() => { setForm(emptyForm); setShowModal(true); }} className="admin-btn flex items-center gap-2">
-          <Plus size={18} /> Add Customer
-        </button>
-      </div>
+      <PageHeader
+        title="Customer Management"
+        subtitle="Add customers by email. They register on the website with the same email to set their password."
+        action={
+          <button onClick={() => { setForm(emptyForm); setShowModal(true); }} className="admin-btn flex items-center gap-2">
+            <Plus size={18} /> Add Customer
+          </button>
+        }
+      />
 
-      <div className="stat-card mb-6">
+      <div className="search-bar">
         <div className="relative">
-          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-          <input type="text" placeholder="Search by name, email, phone..." className="admin-input pl-10"
+          <Search className="absolute left-4 top-3.5 text-slate-400" size={18} />
+          <input type="text" placeholder="Search by name, email, or phone..." className="admin-input pl-11"
             value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
       </div>
 
-      <div className="stat-card overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-gray-500">
-              <th className="pb-3 pr-4">Name</th>
-              <th className="pb-3 pr-4">Phone</th>
-              <th className="pb-3 pr-4">Email</th>
-              <th className="pb-3 pr-4">Properties</th>
-              <th className="pb-3 pr-4">Verified</th>
-              <th className="pb-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr><td colSpan={6} className="py-10 text-center">Loading...</td></tr>
-            ) : customers.map((c) => (
-              <tr key={c._id} className="border-b border-gray-50 hover:bg-gray-50">
-                <td className="py-3 pr-4 font-medium">{c.fullName}</td>
-                <td className="py-3 pr-4">{c.phone}</td>
-                <td className="py-3 pr-4">{c.email}</td>
-                <td className="py-3 pr-4">{c.properties?.length || 0}</td>
-                <td className="py-3 pr-4">
-                  {c.isVerified ? (
-                    <span className="text-emerald-600 flex items-center gap-1"><CheckCircle size={14} /> Yes</span>
-                  ) : (
-                    <button onClick={() => verifyMutation.mutate(c._id)} className="text-amber-600 text-xs hover:underline">Verify</button>
-                  )}
-                </td>
-                <td className="py-3">
-                  <button onClick={() => deleteMutation.mutate(c._id)} className="text-red-500"><Trash2 size={16} /></button>
-                </td>
+      <div className="admin-table-wrap">
+        <div className="admin-table-scroll">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Full Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Properties</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr><td colSpan={6} className="admin-table-empty">Loading customers...</td></tr>
+              ) : customers.length === 0 ? (
+                <tr><td colSpan={6} className="admin-table-empty">No customers yet. Click &quot;Add Customer&quot; to create one.</td></tr>
+              ) : customers.map((c) => (
+                <tr key={c._id}>
+                  <td><span className="cell-primary">{c.fullName}</span></td>
+                  <td><span className="font-medium text-slate-800">{c.phone}</span></td>
+                  <td><span className="text-slate-600">{c.email}</span></td>
+                  <td><span className="count-pill">{c.properties?.length || 0}</span></td>
+                  <td>
+                    {c.isVerified ? (
+                      <span className="status-pill badge-active inline-flex items-center gap-1.5">
+                        <CheckCircle size={14} /> Verified
+                      </span>
+                    ) : (
+                      <button onClick={() => verifyMutation.mutate(c._id)} className="status-pill badge-pending hover:opacity-80 cursor-pointer">
+                        Click to Verify
+                      </button>
+                    )}
+                  </td>
+                  <td>
+                    <button onClick={() => deleteMutation.mutate(c._id)} className="admin-action-btn text-red-500" title="Delete">
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-lg">
-            <h2 className="text-xl font-bold mb-4">Add Customer</h2>
-            <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-3">
+        <div className="admin-modal-overlay">
+          <div className="admin-modal max-w-lg">
+            <h2 className="admin-modal-title">Add New Customer</h2>
+            <p className="admin-modal-desc">Enter customer details. Email must be unique — customer will register on the website using this email.</p>
+            <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4">
               {formFields.map(({ key, label, required, type = 'text' }) => (
-                <input
-                  key={key}
-                  className="admin-input"
-                  placeholder={label}
-                  type={type}
-                  required={required}
-                  value={form[key]}
-                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                />
+                <div key={key}>
+                  <label className="admin-label">{label}</label>
+                  <input
+                    className="admin-input"
+                    placeholder={`Enter ${label.toLowerCase()}`}
+                    type={type}
+                    required={required}
+                    value={form[key]}
+                    onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                  />
+                </div>
               ))}
-              <div className="flex gap-3">
-                <button type="submit" className="admin-btn flex-1">Create</button>
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 border rounded-lg">Cancel</button>
+              <div className="flex gap-3 pt-2">
+                <button type="submit" className="admin-btn flex-1">Create Customer</button>
+                <button type="button" onClick={() => setShowModal(false)} className="admin-btn-outline flex-1">Cancel</button>
               </div>
             </form>
           </div>

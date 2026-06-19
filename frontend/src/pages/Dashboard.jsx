@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { Building2, History, Search, ShoppingCart, Calendar, User } from 'lucide-react';
+import { Building2, History, Search, ShoppingCart, Calendar, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import StatusBadge from '../components/StatusBadge';
+import OwnershipRecordsPanel from '../components/OwnershipRecordsPanel';
 
 export default function Dashboard() {
   const { user } = useSelector((state) => state.auth);
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const [data, setData] = useState({ current: [], past: [], saleRequests: [] });
   const [lookup, setLookup] = useState({ propertyNumber: '', blockName: '' });
   const [lookupResult, setLookupResult] = useState(null);
+  const [ownerLookup, setOwnerLookup] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const loadData = () => {
@@ -58,6 +60,7 @@ export default function Dashboard() {
 
   const tabs = [
     { id: 'properties', label: 'My Properties', icon: Building2 },
+    { id: 'owners', label: 'Owner History', icon: Users },
     { id: 'sold', label: 'Sold / Past', icon: History },
     { id: 'sales', label: 'Buy/Sell Requests', icon: ShoppingCart },
     { id: 'lookup', label: 'Find My Plot', icon: Search },
@@ -108,7 +111,7 @@ export default function Dashboard() {
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div>
                       <h4 className="font-bold text-navy text-lg">{p.propertyNumber} — {p.blockName}</h4>
-                      <p className="text-sm text-gray-500">{p.sectorName} • {p.plotSize} • {p.propertyType}</p>
+                      <p className="text-sm text-gray-500">{p.plotSize} • {p.propertyType}</p>
                       <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
                         <Calendar size={14} />
                         <span>Start: <strong>{formatDate(p.ownershipStartDate || p.purchaseDate)}</strong></span>
@@ -123,11 +126,36 @@ export default function Dashboard() {
                     </div>
                     <div className="flex flex-col items-end gap-2">
                       <StatusBadge status={p.status} />
-                      <Link to={`/properties/${p._id}`} className="text-royal text-sm font-medium hover:underline">View Details</Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOwnerLookup({ blockName: p.blockName, propertyNumber: p.propertyNumber });
+                          setActiveTab('owners');
+                        }}
+                        className="text-royal text-sm font-medium hover:underline flex items-center gap-1"
+                      >
+                        <Users size={14} /> View All Owners
+                      </button>
+                      <Link to={`/properties/${p._id}`} className="text-gray-500 text-sm hover:underline">View Details</Link>
                     </div>
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {!loading && activeTab === 'owners' && (
+            <div>
+              <h3 className="text-lg font-bold text-navy mb-2">Property Owner History</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                See how many owners your plot or house has had — select block and number below.
+              </p>
+              <OwnershipRecordsPanel
+                key={ownerLookup ? `${ownerLookup.blockName}-${ownerLookup.propertyNumber}` : 'manual'}
+                initialBlock={ownerLookup?.blockName || ''}
+                initialPlot={ownerLookup?.propertyNumber || ''}
+                autoFetch={!!ownerLookup}
+              />
             </div>
           )}
 

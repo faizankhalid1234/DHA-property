@@ -31,7 +31,7 @@ export default function PropertyCard({ property, index = 0 }) {
       <div className="p-6">
         <div className="flex items-center gap-2 text-royal text-sm mb-2">
           <MapPin size={14} />
-          <span>{property.blockName} • {property.sectorName}</span>
+          <span>{property.blockName}</span>
         </div>
         <h3 className="text-xl font-bold text-navy mb-2">{property.propertyNumber}</h3>
         <p className="text-gray-500 text-sm mb-4 line-clamp-2">{property.description}</p>

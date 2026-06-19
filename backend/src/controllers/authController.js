@@ -47,12 +47,75 @@ export const customerRegister = asyncHandler(async (req, res) => {
   const address = req.body.address?.trim();
   const { password } = req.body;
 
-  if (!fullName || !fatherName || !cnic || !phone || !email || !address || !password) {
-    return res.status(400).json({ success: false, message: 'All fields are required' });
+  if (!fullName || !phone || !email || !address || !password) {
+    return res.status(400).json({ success: false, message: 'Full name, email, phone, address and password are required' });
   }
 
   if (password.length < 6) {
     return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return res.status(400).json({ success: false, message: 'Email already registered. Please login.' });
+  }
+
+  const preRegistered = await Customer.findOne({ email });
+
+  if (preRegistered) {
+    if (preRegistered.user) {
+      return res.status(400).json({ success: false, message: 'Email already registered. Please login.' });
+    }
+
+    const normalizedPhone = phone.replace(/\D/g, '');
+    const storedPhone = preRegistered.phone.replace(/\D/g, '');
+    if (normalizedPhone !== storedPhone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number does not match the email on file. Use the phone number admin registered for you.',
+      });
+    }
+
+    const user = await User.create({
+      name: fullName,
+      email,
+      password,
+      phone,
+      role: 'customer',
+      customerRef: preRegistered._id,
+    });
+
+    preRegistered.fullName = fullName;
+    preRegistered.address = address;
+    if (fatherName) preRegistered.fatherName = fatherName;
+    if (cnic?.trim()) {
+      if (!validateCNIC(cnic)) {
+        return res.status(400).json({ success: false, message: 'Invalid CNIC. Use 13 digits e.g. 42101-1234567-1' });
+      }
+      preRegistered.cnic = formatCNIC(cnic);
+    }
+    preRegistered.user = user._id;
+    await preRegistered.save();
+
+    return res.status(201).json({
+      success: true,
+      message: 'Account activated successfully',
+      data: {
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          customerRef: preRegistered._id,
+          token: generateToken(user._id, user.role),
+        },
+        customer: preRegistered,
+      },
+    });
+  }
+
+  if (!fatherName || !cnic) {
+    return res.status(400).json({ success: false, message: 'All fields are required for new registration' });
   }
 
   if (!validateCNIC(cnic)) {
@@ -73,11 +136,6 @@ export const customerRegister = asyncHandler(async (req, res) => {
         ? 'CNIC already registered'
         : 'Email already registered';
     return res.status(400).json({ success: false, message });
-  }
-
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    return res.status(400).json({ success: false, message: 'Email already registered' });
   }
 
   const customer = await Customer.create({

@@ -11,7 +11,7 @@ const propertySchema = new mongoose.Schema(
     },
     block: { type: mongoose.Schema.Types.ObjectId, ref: 'Block', required: true },
     blockName: { type: String, required: true },
-    sectorName: { type: String, required: true, trim: true },
+    sectorName: { type: String, default: '', trim: true },
     plotSize: {
       type: String,
       enum: ['5 Marla', '10 Marla', '1 Kanal', '2 Kanal', 'Custom Size'],

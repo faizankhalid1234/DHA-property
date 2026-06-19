@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { Users, Building2, Home, DollarSign, AlertTriangle, CheckCircle } from 'lucide-react';
 import api from '../services/api';
+import PageHeader from '../components/PageHeader';
 
 const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -13,12 +14,12 @@ function StatCard({ icon: Icon, label, value, color, sub }) {
     <div className="stat-card">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-500">{label}</p>
-          <p className="text-2xl font-bold text-navy mt-1">{value}</p>
-          {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+          <p className="text-sm font-medium text-slate-500">{label}</p>
+          <p className="text-3xl font-bold text-navy mt-2">{value}</p>
+          {sub && <p className="text-sm text-slate-500 mt-1">{sub}</p>}
         </div>
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center`}>
-          <Icon className="text-white" size={22} />
+        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}>
+          <Icon className="text-white" size={24} />
         </div>
       </div>
     </div>
@@ -32,7 +33,7 @@ export default function Dashboard() {
     refetchInterval: 30000,
   });
 
-  if (isLoading) return <div className="text-center py-20 text-gray-500">Loading dashboard...</div>;
+  if (isLoading) return <div className="admin-table-empty">Loading dashboard...</div>;
 
   const { overview, statusDistribution, propertyByBlock, monthlyRegistrations, recentCustomers, recentActivities } = data || {};
 
@@ -53,10 +54,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-navy">Super Admin Dashboard</h1>
-        <p className="text-gray-500">DHA Housing Scheme Management Overview</p>
-      </div>
+      <PageHeader title="Dashboard" subtitle="DHA Housing Scheme — overview and analytics" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard icon={Users} label="Total Customers" value={overview?.totalCustomers || 0} color="from-blue-500 to-blue-600" />
@@ -68,7 +66,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="stat-card flex items-center gap-3">
           <CheckCircle className="text-emerald-500" size={24} />
-          <div><p className="text-sm text-gray-500">Active</p><p className="text-xl font-bold">{overview?.activeProperties || 0}</p></div>
+          <div><p className="text-sm font-medium text-slate-500">Active</p><p className="text-2xl font-bold text-navy">{overview?.activeProperties || 0}</p></div>
         </div>
         <div className="stat-card flex items-center gap-3">
           <div className="w-6 h-6 rounded-full bg-amber-400" />

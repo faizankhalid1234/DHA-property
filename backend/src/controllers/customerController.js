@@ -38,7 +38,7 @@ export const getCustomer = asyncHandler(async (req, res) => {
   const customer = await Customer.findById(req.params.id)
     .populate({
       path: 'properties',
-      populate: { path: 'block', select: 'name sector' },
+      populate: { path: 'block', select: 'name' },
     })
     .populate('user', 'email isActive lastLogin');
   if (!customer) {
@@ -48,7 +48,7 @@ export const getCustomer = asyncHandler(async (req, res) => {
 });
 
 export const createCustomer = asyncHandler(async (req, res) => {
-  const { fullName, fatherName, cnic, phone, email, address, password, profileImage } = req.body;
+  const { fullName, fatherName, cnic, phone, email, address, profileImage } = req.body;
 
   const normalizedEmail = email?.trim().toLowerCase();
   const normalizedPhone = phone?.trim();
@@ -96,20 +96,11 @@ export const createCustomer = asyncHandler(async (req, res) => {
     createdBy: req.user._id,
   });
 
-  if (password?.trim()) {
-    const user = await User.create({
-      name: fullName.trim(),
-      email: normalizedEmail,
-      password: password.trim(),
-      phone: normalizedPhone,
-      role: 'customer',
-      customerRef: customer._id,
-    });
-    customer.user = user._id;
-    await customer.save();
-  }
-
-  res.status(201).json({ success: true, data: customer });
+  res.status(201).json({
+    success: true,
+    data: customer,
+    message: 'Customer added. They can register on the website using this email to set their password.',
+  });
 });
 
 export const updateCustomer = asyncHandler(async (req, res) => {

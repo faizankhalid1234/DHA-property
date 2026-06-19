@@ -7,6 +7,7 @@ import {
   deleteProperty,
   assignProperty,
   verifyProperty,
+  getPropertyOwnershipRecords,
   getFeaturedProperties,
   getCustomerProperties,
   updatePropertyStatus,
@@ -18,6 +19,7 @@ const router = express.Router();
 
 router.get('/featured', getFeaturedProperties);
 router.post('/verify', verifyProperty);
+router.get('/ownership-records', getPropertyOwnershipRecords);
 router.get('/my-properties', protect, getCustomerProperties);
 router.get('/stats', protect, adminOnly, getPropertyStats);
 router.get('/', getProperties);

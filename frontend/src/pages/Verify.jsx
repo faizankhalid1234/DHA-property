@@ -66,7 +66,7 @@ export default function Verify() {
               >
                 <option value="">Select a block</option>
                 {blocks.map((b) => (
-                  <option key={b._id} value={b.name}>{b.name} — {b.sector}</option>
+                  <option key={b._id} value={b.name}>{b.name}</option>
                 ))}
               </select>
             </div>
@@ -127,7 +127,6 @@ export default function Verify() {
                   ['Property Number', result.data.propertyNumber],
                   ['Property ID', result.data.propertyId],
                   ['Block', result.data.blockName],
-                  ['Sector', result.data.sectorName],
                   ['Type', result.data.propertyType],
                   ['Size', result.data.plotSize],
                   ['Dimensions', `${result.data.width} x ${result.data.length} ft`],

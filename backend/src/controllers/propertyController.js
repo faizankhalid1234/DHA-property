@@ -51,7 +51,7 @@ export const getProperties = asyncHandler(async (req, res) => {
   const skip = (Number(page) - 1) * Number(limit);
   const [properties, total] = await Promise.all([
     Property.find(filter)
-      .populate('block', 'name sector')
+      .populate('block', 'name')
       .populate('currentOwner', 'fullName cnic phone')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -88,6 +88,7 @@ export const createProperty = asyncHandler(async (req, res) => {
   const propertyData = {
     ...req.body,
     propertyId,
+    sectorName: req.body.sectorName?.trim() || '',
     status,
     statusLocked: true,
     statusSetAt: new Date(),
@@ -188,7 +189,7 @@ export const assignProperty = asyncHandler(async (req, res) => {
     property: property._id,
     customer: customerId,
     ownerName: customer.fullName,
-    ownerCnic: customer.cnic,
+    ownerCnic: customer.cnic || '',
     action: 'assigned',
     details: ownershipDetails || 'Initial property assignment',
     status: 'active',
@@ -224,7 +225,7 @@ export const verifyProperty = asyncHandler(async (req, res) => {
     blockName: { $regex: `^${blockName.trim()}$`, $options: 'i' },
   })
     .populate('currentOwner', 'fullName cnic phone')
-    .populate('block', 'name sector');
+    .populate('block', 'name');
 
   if (!property) {
     return res.json({
@@ -269,6 +270,74 @@ export const verifyProperty = asyncHandler(async (req, res) => {
       ownershipDetails: property.ownershipDetails,
       hasOwner: !!property.currentOwner,
       saleInfo,
+    },
+  });
+});
+
+export const getPropertyOwnershipRecords = asyncHandler(async (req, res) => {
+  const { propertyNumber, blockName } = req.query;
+
+  if (!propertyNumber?.trim() || !blockName?.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Property number and block name are required',
+    });
+  }
+
+  const property = await Property.findOne({
+    propertyNumber: { $regex: `^${propertyNumber.trim()}$`, $options: 'i' },
+    blockName: { $regex: `^${blockName.trim()}$`, $options: 'i' },
+  });
+
+  if (!property) {
+    return res.status(404).json({ success: false, message: 'Property not found in this block' });
+  }
+
+  const [periods, history] = await Promise.all([
+    OwnershipPeriod.find({ property: property._id })
+      .populate('customer', 'fullName phone email')
+      .sort({ startDate: 1 }),
+    OwnershipHistory.find({ property: property._id })
+      .populate('performedBy', 'name')
+      .sort({ createdAt: 1 }),
+  ]);
+
+  const ownerIds = new Set(periods.map((p) => p.customer?._id?.toString()).filter(Boolean));
+
+  res.json({
+    success: true,
+    data: {
+      property: {
+        _id: property._id,
+        propertyNumber: property.propertyNumber,
+        propertyId: property.propertyId,
+        blockName: property.blockName,
+        sectorName: property.sectorName,
+        propertyType: property.propertyType,
+        status: property.status,
+        marketStatus: property.marketStatus,
+        currentOwnerName: property.ownerName || 'Unassigned',
+      },
+      totalOwners: ownerIds.size,
+      totalRecords: periods.length,
+      owners: periods.map((p, index) => ({
+        order: index + 1,
+        ownerName: p.customer?.fullName || 'Unknown',
+        phone: p.customer?.phone || '',
+        email: p.customer?.email || '',
+        startDate: p.startDate,
+        endDate: p.endDate,
+        isCurrent: p.isCurrent,
+        role: p.role,
+      })),
+      history: history.map((h) => ({
+        action: h.action,
+        ownerName: h.ownerName,
+        previousOwnerName: h.previousOwnerName,
+        details: h.details,
+        date: h.createdAt,
+        performedBy: h.performedBy?.name || 'System',
+      })),
     },
   });
 });
@@ -359,7 +428,7 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
       property: property._id,
       customer: property.currentOwner._id,
       ownerName: property.currentOwner.fullName,
-      ownerCnic: property.currentOwner.cnic,
+      ownerCnic: property.currentOwner.cnic || '',
       action: 'status_changed',
       details: `Status changed from ${previousStatus} to ${status}`,
       status,

@@ -56,6 +56,11 @@ app.use('/api/sales', saleRoutes);
 app.use((err, req, res, next) => {
   console.error(err.stack);
 
+  if (err.name === 'ValidationError') {
+    const messages = Object.values(err.errors).map((e) => e.message).join('. ');
+    return res.status(400).json({ success: false, message: messages || 'Validation failed' });
+  }
+
   if (err.code === 11000) {
     const field = Object.keys(err.keyPattern || {})[0] || 'field';
     return res.status(400).json({

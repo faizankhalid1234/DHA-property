@@ -6,7 +6,7 @@ import api from '../services/api';
 
 export default function Blocks() {
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ name: '', sector: '', description: '' });
+  const [form, setForm] = useState({ name: '', description: '' });
   const queryClient = useQueryClient();
 
   const { data: blocks = [], isLoading } = useQuery({
@@ -25,7 +25,7 @@ export default function Blocks() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-navy">Block Management</h1>
-          <p className="text-gray-500">Manage housing blocks and sectors</p>
+          <p className="text-gray-500">Manage housing blocks</p>
         </div>
         <button onClick={() => setShowModal(true)} className="admin-btn flex items-center gap-2">
           <Plus size={18} /> Add Block
@@ -36,7 +36,6 @@ export default function Blocks() {
         {isLoading ? <p>Loading...</p> : blocks.map((block) => (
           <div key={block._id} className="stat-card">
             <h3 className="text-lg font-bold text-navy">{block.name}</h3>
-            <p className="text-sm text-gray-500 mb-4">{block.sector}</p>
             <p className="text-xs text-gray-400 mb-4">{block.description}</p>
             <div className="grid grid-cols-2 gap-3 text-center">
               <div className="bg-blue-50 rounded-lg p-2">
@@ -67,8 +66,6 @@ export default function Blocks() {
             <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-3">
               <input className="admin-input" placeholder="Block Name (e.g. Block A)" required value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              <input className="admin-input" placeholder="Sector" required value={form.sector}
-                onChange={(e) => setForm({ ...form, sector: e.target.value })} />
               <textarea className="admin-input" placeholder="Description" rows={3} value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })} />
               <div className="flex gap-3">

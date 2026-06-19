@@ -9,30 +9,162 @@
 }
 
 @layer base {
+  html {
+    font-size: 16px;
+  }
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-slate-100 text-slate-800 antialiased;
+    font-family: "Inter", system-ui, sans-serif;
   }
 }
 
 @layer components {
   .sidebar-link {
-    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white
-           hover:bg-white/10 transition-all duration-200;
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 font-medium text-[15px]
+           hover:text-white hover:bg-white/10 transition-all duration-200;
   }
   .sidebar-link.active {
-    @apply bg-gradient-to-r from-royal/80 to-royal text-white shadow-lg;
+    @apply bg-gradient-to-r from-royal to-blue-700 text-white shadow-lg shadow-blue-900/30;
   }
+
   .stat-card {
-    @apply bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow;
+    @apply bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 hover:shadow-md transition-shadow;
   }
+
   .admin-input {
-    @apply w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none
-           focus:ring-2 focus:ring-royal/30 focus:border-royal;
+    @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 text-[15px]
+           placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-royal/25 focus:border-royal;
   }
+
   .admin-btn {
-    @apply px-4 py-2.5 bg-royal text-white rounded-lg hover:bg-navy transition-colors font-medium;
+    @apply px-5 py-3 bg-gradient-to-r from-royal to-blue-800 text-white rounded-xl
+           hover:shadow-lg hover:shadow-royal/25 transition-all font-semibold text-[15px];
   }
-  .status-badge {
-    @apply px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide;
+
+  .admin-btn-outline {
+    @apply px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl
+           hover:bg-slate-50 transition-colors font-medium text-[15px];
+  }
+
+  /* Page header */
+  .page-header {
+    @apply mb-8 pb-6 border-b border-slate-200/80;
+  }
+  .page-title {
+    @apply text-3xl font-bold text-navy tracking-tight;
+  }
+  .page-subtitle {
+    @apply text-base text-slate-500 mt-1.5 max-w-2xl leading-relaxed;
+  }
+
+  /* Search bar */
+  .search-bar {
+    @apply bg-white rounded-2xl p-4 mb-6 shadow-sm border border-slate-200/80;
+  }
+
+  /* Tables */
+  .admin-table-wrap {
+    @apply bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden;
+  }
+  .admin-table-scroll {
+    @apply overflow-x-auto;
+  }
+  .admin-table {
+    @apply w-full min-w-[900px] text-[15px];
+  }
+  .admin-table thead {
+    @apply bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-slate-200;
+  }
+  .admin-table thead th {
+    @apply px-5 py-4 text-left text-[13px] font-bold text-slate-600 tracking-normal whitespace-nowrap;
+  }
+  .admin-table tbody tr {
+    @apply border-b border-slate-100 transition-colors;
+  }
+  .admin-table tbody tr:nth-child(even) {
+    @apply bg-slate-50/60;
+  }
+  .admin-table tbody tr:hover {
+    @apply bg-blue-50/70;
+  }
+  .admin-table tbody td {
+    @apply px-5 py-4 align-middle text-slate-700 leading-snug;
+  }
+  .admin-table-empty {
+    @apply py-20 text-center text-slate-500 text-base;
+  }
+
+  .cell-primary {
+    @apply font-semibold text-navy text-[15px];
+  }
+  .cell-secondary {
+    @apply text-sm text-slate-500 mt-0.5;
+  }
+  .cell-mono {
+    @apply text-xs font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded inline-block mt-1;
+  }
+
+  /* Status pills — readable, highlighted */
+  .status-pill {
+    @apply inline-flex items-center px-3 py-1.5 rounded-lg text-[13px] font-semibold capitalize
+           border whitespace-nowrap;
+  }
+  .badge-active {
+    @apply bg-emerald-50 text-emerald-800 border-emerald-200;
+  }
+  .badge-pending {
+    @apply bg-amber-50 text-amber-800 border-amber-200;
+  }
+  .badge-inactive {
+    @apply bg-red-50 text-red-800 border-red-200;
+  }
+  .badge-case {
+    @apply bg-purple-50 text-purple-800 border-purple-200;
+  }
+  .badge-available {
+    @apply bg-sky-50 text-sky-800 border-sky-200;
+  }
+  .badge-owned {
+    @apply bg-teal-50 text-teal-800 border-teal-200;
+  }
+  .badge-sale {
+    @apply bg-orange-50 text-orange-800 border-orange-200;
+  }
+
+  .count-pill {
+    @apply inline-flex items-center justify-center min-w-[28px] px-2.5 py-1
+           bg-blue-50 text-blue-800 border border-blue-200 rounded-lg text-sm font-bold;
+  }
+
+  .admin-action-btn {
+    @apply p-2.5 rounded-xl border border-transparent hover:border-slate-200
+           hover:bg-white hover:shadow-sm transition-all;
+  }
+
+  /* Modals */
+  .admin-modal-overlay {
+    @apply fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4;
+  }
+  .admin-modal {
+    @apply bg-white rounded-2xl p-6 w-full shadow-2xl border border-slate-200;
+  }
+  .admin-modal-title {
+    @apply text-xl font-bold text-navy mb-1;
+  }
+  .admin-modal-desc {
+    @apply text-sm text-slate-500 mb-5 leading-relaxed;
+  }
+  .admin-label {
+    @apply block text-sm font-semibold text-slate-700 mb-1.5;
+  }
+
+  .highlight-box {
+    @apply p-4 rounded-xl border text-sm leading-relaxed;
+  }
+  .highlight-info {
+    @apply p-4 rounded-xl border text-sm leading-relaxed bg-blue-50 border-blue-200 text-blue-900;
+  }
+  .highlight-warn {
+    @apply p-4 rounded-xl border text-sm leading-relaxed bg-amber-50 border-amber-200 text-amber-900;
   }
 }

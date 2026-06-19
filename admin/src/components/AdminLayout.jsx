@@ -7,10 +7,12 @@ export default function AdminLayout() {
   if (!user) return <Navigate to="/login" />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50/30">
       <Sidebar />
-      <main className="lg:ml-64 p-6 lg:p-8">
-        <Outlet />
+      <main className="lg:ml-64 p-5 sm:p-6 lg:p-8 min-h-screen">
+        <div className="max-w-[1600px] mx-auto">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
