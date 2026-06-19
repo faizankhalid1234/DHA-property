@@ -1,0 +1,13 @@
+{
+  "name": "dha-housing-scheme",
+  "version": "1.0.0",
+  "description": "DHA Housing Scheme Management System",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix backend && npm install --prefix frontend && npm install --prefix admin",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:admin": "npm run dev --prefix admin",
+    "seed": "npm run seed --prefix backend"
+  }
+}
