@@ -7,6 +7,9 @@ import { generatePropertyQR } from '../utils/qrcode.js';
 import { asyncHandler } from '../middleware/validate.js';
 import { createNotification } from '../utils/notifications.js';
 import { recalculateBlockStats } from '../utils/blockStats.js';
+import { deletePropertyFully } from '../utils/propertyCleanup.js';
+import { PROPERTY_STATUSES, canAssign, canSellOrBuy, statusMessage } from '../utils/propertyStatus.js';
+import { cancelPendingSalesForProperty } from '../utils/saleCleanup.js';
 
 const generatePropertyId = async () => {
   const count = await Property.countDocuments();
@@ -50,15 +53,24 @@ export const getProperties = asyncHandler(async (req, res) => {
   }
 
   const skip = (Number(page) - 1) * Number(limit);
-  const [properties, total] = await Promise.all([
+  const [rawProperties, total] = await Promise.all([
     Property.find(filter)
       .populate('block', 'name')
-      .populate('currentOwner', 'fullName cnic phone')
+      .populate('currentOwner', 'fullName cnic phone email')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(Number(limit)),
     Property.countDocuments(filter),
   ]);
+
+  const properties = rawProperties.map((p) => {
+    const doc = p.toObject();
+    if (!doc.currentOwner) {
+      doc.marketStatus = 'available';
+      doc.ownerName = '';
+    }
+    return doc;
+  });
 
   res.json({
     success: true,
@@ -140,8 +152,7 @@ export const deleteProperty = asyncHandler(async (req, res) => {
   if (!property) {
     return res.status(404).json({ success: false, message: 'Property not found' });
   }
-  const blockId = property.block;
-  await property.deleteOne();
+  const blockId = await deletePropertyFully(property._id);
   if (blockId) {
     await recalculateBlockStats(blockId);
   }
@@ -153,6 +164,17 @@ export const assignProperty = asyncHandler(async (req, res) => {
   const property = await Property.findById(req.params.id);
   if (!property) {
     return res.status(404).json({ success: false, message: 'Property not found' });
+  }
+
+  if (property.currentOwner) {
+    return res.status(400).json({ success: false, message: 'Property already has an owner' });
+  }
+
+  if (!canAssign(property.status)) {
+    return res.status(400).json({
+      success: false,
+      message: statusMessage(property.status, 'assign'),
+    });
   }
 
   const customer = await Customer.findById(customerId);
@@ -191,9 +213,13 @@ export const assignProperty = asyncHandler(async (req, res) => {
     ownerCnic: customer.cnic || '',
     action: 'assigned',
     details: ownershipDetails || 'Initial property assignment',
-    status: 'active',
+    status: property.status,
     performedBy: req.user._id,
   });
+
+  if (property.block) {
+    await recalculateBlockStats(property.block);
+  }
 
   if (customer.user) {
     await createNotification({
@@ -342,7 +368,7 @@ export const getPropertyOwnershipRecords = asyncHandler(async (req, res) => {
 });
 
 export const getFeaturedProperties = asyncHandler(async (req, res) => {
-  const properties = await Property.find({ isFeatured: true, status: { $ne: 'inactive' } })
+  const properties = await Property.find({ isFeatured: true, status: 'active' })
     .limit(6)
     .populate('block', 'name');
   res.json({ success: true, data: properties });
@@ -413,14 +439,31 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
   if (property.statusLocked) {
     return res.status(400).json({
       success: false,
-      message: 'Status is locked at creation and cannot be changed',
+      message: 'Property status is set at creation and cannot be changed here. Use Cases section for legal case updates.',
     });
   }
 
   const { status } = req.body;
+  if (!PROPERTY_STATUSES.includes(status)) {
+    return res.status(400).json({ success: false, message: 'Invalid property status' });
+  }
+
   const previousStatus = property.status;
+  if (previousStatus === status) {
+    return res.json({ success: true, data: property });
+  }
+
+  let cancelledSales = 0;
+  if (!canSellOrBuy(status) && property.marketStatus === 'sale_pending') {
+    cancelledSales = await cancelPendingSalesForProperty(property._id, req.user._id);
+  }
+
   property.status = status;
   await property.save();
+
+  if (property.block) {
+    await recalculateBlockStats(property.block);
+  }
 
   if (property.currentOwner) {
     await OwnershipHistory.create({
@@ -429,17 +472,17 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
       ownerName: property.currentOwner.fullName,
       ownerCnic: property.currentOwner.cnic || '',
       action: 'status_changed',
-      details: `Status changed from ${previousStatus} to ${status}`,
+      details: `Status changed from ${previousStatus} to ${status}${cancelledSales ? `. ${cancelledSales} pending sale(s) cancelled.` : ''}`,
       status,
       performedBy: req.user._id,
-      metadata: { previousStatus, newStatus: status },
+      metadata: { previousStatus, newStatus: status, cancelledSales },
     });
 
     if (property.currentOwner.user) {
       await createNotification({
         recipientId: property.currentOwner.user,
         title: 'Property Status Updated',
-        message: `Your property ${property.propertyNumber} status has been changed to ${status.toUpperCase()}.`,
+        message: `Your property ${property.propertyNumber} status is now ${status.toUpperCase()}.${cancelledSales ? ' Pending sale requests were cancelled.' : ''}`,
         type: 'status_changed',
         relatedModel: 'Property',
         relatedId: property._id,

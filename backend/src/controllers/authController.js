@@ -95,6 +95,7 @@ export const customerRegister = asyncHandler(async (req, res) => {
       preRegistered.cnic = formatCNIC(cnic);
     }
     preRegistered.user = user._id;
+    preRegistered.isVerified = true;
     await preRegistered.save();
 
     return res.status(201).json({

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Trash2, CheckCircle } from 'lucide-react';
+import { Plus, Search, Trash2, CheckCircle, UserCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import PageHeader from '../components/PageHeader';
@@ -32,16 +32,11 @@ export default function Customers() {
     onSuccess: (res) => {
       queryClient.invalidateQueries(['customers']);
       queryClient.invalidateQueries(['customers-list']);
-      toast.success(res.data?.message || 'Customer created — they can register with this email');
+      toast.success(res.data?.message || 'Customer created and verified');
       setShowModal(false);
       setForm(emptyForm);
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Failed'),
-  });
-
-  const verifyMutation = useMutation({
-    mutationFn: (id) => api.patch(`/customers/${id}/verify`),
-    onSuccess: () => { queryClient.invalidateQueries(['customers']); toast.success('Verified'); },
   });
 
   const deleteMutation = useMutation({
@@ -54,7 +49,7 @@ export default function Customers() {
     <div>
       <PageHeader
         title="Customer Management"
-        subtitle="Add customers by email. They register on the website with the same email to set their password."
+        subtitle="Add customers by email — they are verified automatically. Customer registers on the website with the same email to set password."
         action={
           <button onClick={() => { setForm(emptyForm); setShowModal(true); }} className="admin-btn flex items-center gap-2">
             <Plus size={18} /> Add Customer
@@ -95,14 +90,16 @@ export default function Customers() {
                   <td><span className="text-slate-600">{c.email}</span></td>
                   <td><span className="count-pill">{c.properties?.length || 0}</span></td>
                   <td>
-                    {c.isVerified ? (
+                    {c.user ? (
+                      <span className="status-pill badge-active inline-flex items-center gap-1.5">
+                        <UserCheck size={14} /> Registered
+                      </span>
+                    ) : c.isVerified ? (
                       <span className="status-pill badge-active inline-flex items-center gap-1.5">
                         <CheckCircle size={14} /> Verified
                       </span>
                     ) : (
-                      <button onClick={() => verifyMutation.mutate(c._id)} className="status-pill badge-pending hover:opacity-80 cursor-pointer">
-                        Click to Verify
-                      </button>
+                      <span className="status-pill badge-pending">Added</span>
                     )}
                   </td>
                   <td>
@@ -121,7 +118,10 @@ export default function Customers() {
         <div className="admin-modal-overlay">
           <div className="admin-modal max-w-lg">
             <h2 className="admin-modal-title">Add New Customer</h2>
-            <p className="admin-modal-desc">Enter customer details. Email must be unique — customer will register on the website using this email.</p>
+            <p className="admin-modal-desc">
+              Enter customer details. Customer is <strong>verified automatically</strong> when you create them here.
+              They register on the website using this email to set their password.
+            </p>
             <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4">
               {formFields.map(({ key, label, required, type = 'text' }) => (
                 <div key={key}>
@@ -137,7 +137,7 @@ export default function Customers() {
                 </div>
               ))}
               <div className="flex gap-3 pt-2">
-                <button type="submit" className="admin-btn flex-1">Create Customer</button>
+                <button type="submit" className="admin-btn flex-1">Create & Verify Customer</button>
                 <button type="button" onClick={() => setShowModal(false)} className="admin-btn-outline flex-1">Cancel</button>
               </div>
             </form>

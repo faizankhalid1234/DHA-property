@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { getApiError } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -21,6 +21,9 @@ export function AuthProvider({ children }) {
       localStorage.setItem('dha_admin_user', JSON.stringify(data.data));
       setUser(data.data);
       return data.data;
+    } catch (err) {
+      const message = getApiError(err);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }

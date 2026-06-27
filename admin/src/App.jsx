@@ -8,7 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Properties from './pages/Properties';
 import Customers from './pages/Customers';
 import Blocks from './pages/Blocks';
-import Transfers from './pages/Transfers';
+import Sales from './pages/Sales';
 import Cases from './pages/Cases';
 import Documents from './pages/Documents';
 import Reports from './pages/Reports';
@@ -27,7 +27,7 @@ function AppRoutes() {
         <Route path="/properties" element={<Properties />} />
         <Route path="/customers" element={<Customers />} />
         <Route path="/blocks" element={<Blocks />} />
-        <Route path="/transfers" element={<Transfers />} />
+        <Route path="/sales" element={<Sales />} />
         <Route path="/cases" element={<Cases />} />
         <Route path="/documents" element={<Documents />} />
         <Route path="/reports" element={<Reports />} />

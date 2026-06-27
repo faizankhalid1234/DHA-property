@@ -4,6 +4,9 @@ import Customer from '../models/Customer.js';
 import OwnershipHistory from '../models/OwnershipHistory.js';
 import { asyncHandler } from '../middleware/validate.js';
 import { createNotification, notifyAdmins } from '../utils/notifications.js';
+import { recalculateBlockStats } from '../utils/blockStats.js';
+import { cancelPendingSalesForProperty } from '../utils/saleCleanup.js';
+import { PROPERTY_STATUSES } from '../utils/propertyStatus.js';
 
 const generateCaseNumber = async () => {
   const count = await Case.countDocuments();
@@ -70,7 +73,12 @@ export const createCase = asyncHandler(async (req, res) => {
   });
 
   property.status = 'case';
+  await cancelPendingSalesForProperty(propertyId, req.user._id);
   await property.save();
+
+  if (property.block) {
+    await recalculateBlockStats(property.block);
+  }
 
   if (property.currentOwner) {
     const customer = await Customer.findById(property.currentOwner);
@@ -139,8 +147,26 @@ export const resolveCase = asyncHandler(async (req, res) => {
 
   const property = await Property.findById(caseDoc.property);
   if (property) {
-    property.status = newPropertyStatus;
+    const newStatus = PROPERTY_STATUSES.includes(newPropertyStatus) ? newPropertyStatus : 'active';
+    property.status = newStatus;
     await property.save();
+    if (property.block) {
+      await recalculateBlockStats(property.block);
+    }
+    if (property.currentOwner) {
+      const customer = await Customer.findById(property.currentOwner);
+      await OwnershipHistory.create({
+        property: property._id,
+        customer: property.currentOwner,
+        ownerName: customer?.fullName || '',
+        ownerCnic: customer?.cnic || '',
+        action: 'status_changed',
+        details: `Case ${caseDoc.caseNumber} resolved. Property status set to ${newStatus}.`,
+        status: newStatus,
+        performedBy: req.user._id,
+        metadata: { caseId: caseDoc._id, resolution },
+      });
+    }
   }
 
   res.json({ success: true, data: caseDoc });

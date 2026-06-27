@@ -6,6 +6,7 @@ import Transfer from '../models/Transfer.js';
 import OwnershipHistory from '../models/OwnershipHistory.js';
 import { asyncHandler } from '../middleware/validate.js';
 import { createNotification } from '../utils/notifications.js';
+import { canSellOrBuy, statusMessage } from '../utils/propertyStatus.js';
 
 const generateRequestNumber = async () => {
   const count = await SaleRequest.countDocuments();
@@ -57,43 +58,134 @@ export const createSaleRequest = asyncHandler(async (req, res) => {
   if (!property.currentOwner) {
     return res.status(400).json({ success: false, message: 'Property has no owner to buy from' });
   }
-  if (property.currentOwner._id.toString() === buyer._id.toString()) {
-    return res.status(400).json({ success: false, message: 'You already own this property' });
+
+  const saleRequest = await initiateSaleRequest({
+    property,
+    seller: property.currentOwner,
+    buyer,
+    requestedBy: 'buyer',
+    notes,
+  });
+
+  res.status(201).json({ success: true, data: saleRequest });
+});
+
+const initiateSaleRequest = async ({ property, seller, buyer, requestedBy, notes }) => {
+  const ownerId = (property.currentOwner?._id || property.currentOwner)?.toString();
+  if (!ownerId || ownerId !== seller._id.toString()) {
+    const err = new Error('Only the current owner can sell this property');
+    err.status = 400;
+    throw err;
+  }
+  if (seller._id.toString() === buyer._id.toString()) {
+    const err = new Error('Buyer cannot be the same as seller');
+    err.status = 400;
+    throw err;
   }
   if (property.marketStatus === 'sale_pending') {
-    return res.status(400).json({ success: false, message: 'Sale already pending for this property' });
+    const err = new Error('Sale already pending for this property');
+    err.status = 400;
+    throw err;
   }
-  if (property.status === 'case') {
-    return res.status(400).json({ success: false, message: 'Property is under legal case' });
+  if (!canSellOrBuy(property.status)) {
+    const err = new Error(statusMessage(property.status, 'complete this sale'));
+    err.status = 400;
+    throw err;
   }
 
   const requestNumber = await generateRequestNumber();
   const saleRequest = await SaleRequest.create({
     requestNumber,
-    property: propertyId,
-    seller: property.currentOwner._id,
-    sellerName: property.currentOwner.fullName,
+    property: property._id,
+    seller: seller._id,
+    sellerName: seller.fullName,
     buyer: buyer._id,
     buyerName: buyer.fullName,
-    requestedBy: 'buyer',
-    notes,
+    requestedBy,
+    notes: notes || '',
   });
 
   property.marketStatus = 'sale_pending';
   property.activeSaleRequest = saleRequest._id;
   await property.save();
 
-  const notifyUsers = [property.currentOwner.user, buyer.user].filter(Boolean);
-  for (const userId of notifyUsers) {
+  const sellerUser = seller.user || (await Customer.findById(seller._id).select('user'))?.user;
+  const buyerUser = buyer.user || (await Customer.findById(buyer._id).select('user'))?.user;
+  for (const userId of [sellerUser, buyerUser].filter(Boolean)) {
     await createNotification({
       recipientId: userId,
       title: 'Property Sale Request',
-      message: `Sale request ${requestNumber} for ${property.propertyNumber} (${property.blockName}). Seller: ${property.currentOwner.fullName}, Buyer: ${buyer.fullName}. Awaiting admin approval.`,
+      message: `Sale request ${requestNumber} for ${property.propertyNumber} (${property.blockName}). Seller: ${seller.fullName}, Buyer: ${buyer.fullName}. Awaiting admin approval.`,
       type: 'general',
       relatedModel: 'Property',
       relatedId: property._id,
     });
   }
+
+  return saleRequest;
+};
+
+export const createSellerSale = asyncHandler(async (req, res) => {
+  const { propertyId, buyerEmail, notes } = req.body;
+  if (!propertyId || !buyerEmail?.trim()) {
+    return res.status(400).json({ success: false, message: 'Property and buyer email are required' });
+  }
+
+  const seller = await Customer.findOne({ user: req.user._id });
+  if (!seller) {
+    return res.status(404).json({ success: false, message: 'Customer profile not found' });
+  }
+
+  const buyer = await Customer.findOne({ email: buyerEmail.trim().toLowerCase() });
+  if (!buyer) {
+    return res.status(404).json({
+      success: false,
+      message: 'Buyer not found. Ask admin to add the buyer as a customer with this email first.',
+    });
+  }
+
+  const property = await Property.findById(propertyId).populate('currentOwner');
+  if (!property) {
+    return res.status(404).json({ success: false, message: 'Property not found' });
+  }
+
+  const saleRequest = await initiateSaleRequest({
+    property,
+    seller,
+    buyer,
+    requestedBy: 'seller',
+    notes,
+  });
+
+  res.status(201).json({ success: true, data: saleRequest });
+});
+
+export const createAdminSale = asyncHandler(async (req, res) => {
+  const { propertyId, buyerId, notes } = req.body;
+  if (!propertyId || !buyerId) {
+    return res.status(400).json({ success: false, message: 'Property and buyer are required' });
+  }
+
+  const property = await Property.findById(propertyId).populate('currentOwner');
+  if (!property) {
+    return res.status(404).json({ success: false, message: 'Property not found' });
+  }
+  if (!property.currentOwner) {
+    return res.status(400).json({ success: false, message: 'Property has no owner to sell from' });
+  }
+
+  const buyer = await Customer.findById(buyerId);
+  if (!buyer) {
+    return res.status(404).json({ success: false, message: 'Buyer customer not found' });
+  }
+
+  const saleRequest = await initiateSaleRequest({
+    property,
+    seller: property.currentOwner,
+    buyer,
+    requestedBy: 'admin',
+    notes,
+  });
 
   res.status(201).json({ success: true, data: saleRequest });
 });
@@ -113,6 +205,13 @@ export const approveSaleRequest = asyncHandler(async (req, res) => {
   }
 
   const property = saleRequest.property;
+  if (!canSellOrBuy(property.status)) {
+    return res.status(400).json({
+      success: false,
+      message: statusMessage(property.status, 'approve this sale'),
+    });
+  }
+
   const transferDate = saleDate ? new Date(saleDate) : new Date();
   const transferNumber = await generateTransferNumber();
 

@@ -46,97 +46,10 @@ export const getTransfer = asyncHandler(async (req, res) => {
 });
 
 export const createTransfer = asyncHandler(async (req, res) => {
-  const { propertyId, newOwnerId, transferReason, notes, transferDate } = req.body;
-
-  const property = await Property.findById(propertyId).populate('currentOwner');
-  if (!property) {
-    return res.status(404).json({ success: false, message: 'Property not found' });
-  }
-  if (!property.currentOwner) {
-    return res.status(400).json({ success: false, message: 'Property has no current owner' });
-  }
-
-  const newOwner = await Customer.findById(newOwnerId);
-  if (!newOwner) {
-    return res.status(404).json({ success: false, message: 'New owner not found' });
-  }
-
-  const previousOwner = property.currentOwner;
-  const transferNumber = await generateTransferNumber();
-  const saleDate = transferDate ? new Date(transferDate) : new Date();
-
-  await OwnershipPeriod.findOneAndUpdate(
-    { property: propertyId, customer: previousOwner._id, isCurrent: true },
-    { endDate: saleDate, isCurrent: false, role: 'seller' }
-  );
-
-  await OwnershipPeriod.create({
-    property: propertyId,
-    customer: newOwnerId,
-    propertyNumber: property.propertyNumber,
-    blockName: property.blockName,
-    sectorName: property.sectorName,
-    propertyType: property.propertyType,
-    startDate: saleDate,
-    isCurrent: true,
-    role: 'owner',
+  return res.status(403).json({
+    success: false,
+    message: 'Manual ownership transfer is disabled. Use Property Sales to approve or create sale requests.',
   });
-
-  const transfer = await Transfer.create({
-    property: propertyId,
-    previousOwner: previousOwner._id,
-    previousOwnerName: previousOwner.fullName,
-    previousOwnerCnic: previousOwner.cnic || '',
-    newOwner: newOwnerId,
-    newOwnerName: newOwner.fullName,
-    newOwnerCnic: newOwner.cnic || '',
-    transferDate: saleDate,
-    transferReason,
-    notes,
-    performedBy: req.user._id,
-    transferNumber,
-  });
-
-  await OwnershipHistory.create({
-    property: propertyId,
-    customer: newOwnerId,
-    ownerName: newOwner.fullName,
-    ownerCnic: newOwner.cnic || '',
-    action: 'transferred',
-    previousOwner: previousOwner._id,
-    previousOwnerName: previousOwner.fullName,
-    details: `Transferred from ${previousOwner.fullName} to ${newOwner.fullName}. ${transferReason || ''}`,
-    status: property.status,
-    performedBy: req.user._id,
-    metadata: { transferId: transfer._id, transferNumber },
-  });
-
-  await Customer.findByIdAndUpdate(previousOwner._id, {
-    $pull: { properties: propertyId },
-  });
-  await Customer.findByIdAndUpdate(newOwnerId, {
-    $addToSet: { properties: propertyId },
-  });
-
-  property.currentOwner = newOwnerId;
-  property.ownerName = newOwner.fullName;
-  property.marketStatus = 'owned';
-  property.activeSaleRequest = null;
-  await property.save();
-
-  const notifyUsers = [previousOwner.user, newOwner.user].filter(Boolean);
-  for (const userId of notifyUsers) {
-    await createNotification({
-      recipientId: userId,
-      title: 'Property Transferred',
-      message: `Property ${property.propertyNumber} transfer ${transferNumber} has been recorded.`,
-      type: 'property_transferred',
-      relatedModel: 'Transfer',
-      relatedId: transfer._id,
-    });
-  }
-
-  res.status(201).json({ success: true, data: transfer });
 });
 
 export const getCustomerTransfers = asyncHandler(async (req, res) => {

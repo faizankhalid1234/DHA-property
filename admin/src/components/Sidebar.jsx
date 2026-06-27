@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Building2, Users, Grid3X3, History,
+  LayoutDashboard, Building2, Users, Grid3X3, ShoppingCart,
   Scale, FileText, BarChart3, LogOut, Menu, X, Shield,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -11,7 +11,7 @@ const navItems = [
   { path: '/properties', label: 'Properties', icon: Building2 },
   { path: '/customers', label: 'Customers', icon: Users },
   { path: '/blocks', label: 'Blocks', icon: Grid3X3 },
-  { path: '/transfers', label: 'Ownership Records', icon: History },
+  { path: '/sales', label: 'Property Sales', icon: ShoppingCart },
   { path: '/cases', label: 'Cases', icon: Scale },
   { path: '/documents', label: 'Documents', icon: FileText },
   { path: '/reports', label: 'Reports', icon: BarChart3 },

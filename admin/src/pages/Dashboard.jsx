@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import {
   Users, Building2, Home, DollarSign,
-  Grid3X3, History, ChevronRight, Activity,
+  Grid3X3, ShoppingCart, ChevronRight, Activity,
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -111,7 +111,7 @@ export default function Dashboard() {
     { to: '/properties', label: 'Properties', icon: Building2, desc: 'Manage plots & houses' },
     { to: '/customers', label: 'Customers', icon: Users, desc: 'Add & verify owners' },
     { to: '/blocks', label: 'Blocks', icon: Grid3X3, desc: 'Housing blocks' },
-    { to: '/transfers', label: 'Owner Records', icon: History, desc: 'Ownership history' },
+    { to: '/sales', label: 'Property Sales', icon: ShoppingCart, desc: 'Approve pending sales' },
   ];
 
   const today = new Date().toLocaleDateString('en-PK', {

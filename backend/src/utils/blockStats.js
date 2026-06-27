@@ -1,11 +1,26 @@
 import Block from '../models/Block.js';
 import Property from '../models/Property.js';
 
+export const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export function blockPropertyFilter(block) {
+  if (!block) return { _id: null };
+  return {
+    $or: [
+      { block: block._id },
+      { blockName: { $regex: `^${escapeRegex(block.name)}$`, $options: 'i' } },
+    ],
+  };
+}
+
 export async function recalculateBlockStats(blockId) {
   if (!blockId) return null;
 
+  const block = await Block.findById(blockId);
+  if (!block) return null;
+
   const stats = await Property.aggregate([
-    { $match: { block: blockId } },
+    { $match: blockPropertyFilter(block) },
     {
       $group: {
         _id: null,
@@ -38,7 +53,5 @@ export async function recalculateAllBlockStats() {
 
 export async function countPropertiesForBlock(block) {
   if (!block) return 0;
-  return Property.countDocuments({
-    $or: [{ block: block._id }, { blockName: { $regex: `^${block.name}$`, $options: 'i' } }],
-  });
+  return Property.countDocuments(blockPropertyFilter(block));
 }

@@ -139,6 +139,12 @@ export default function Verify() {
                   </div>
                 ))}
 
+                {result.data.status === 'pending' && (
+                  <div className="flex items-center gap-2 p-4 bg-amber-50 dark:bg-amber-950/50 rounded-xl text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-900">
+                    <AlertTriangle size={18} />
+                    <span className="text-sm">Verification pending — buy/sell is not allowed until status is Active.</span>
+                  </div>
+                )}
                 {result.data.status === 'case' && (
                   <div className="flex items-center gap-2 p-4 bg-purple-50 dark:bg-purple-950/50 rounded-xl text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-900">
                     <AlertTriangle size={18} />

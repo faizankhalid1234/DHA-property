@@ -75,6 +75,17 @@ export default function PropertyDetail() {
               <div className="glass-card p-6">
                 <p className="text-3xl font-bold text-gold mb-1">PKR {property.price?.toLocaleString()}</p>
                 <p className="text-faint text-sm mb-4">Property Price</p>
+                {property.status !== 'active' && (
+                  <p className={`text-sm mb-4 p-3 rounded-lg ${
+                    property.status === 'case' ? 'bg-purple-50 text-purple-700' :
+                    property.status === 'inactive' ? 'bg-red-50 text-red-700' :
+                    'bg-amber-50 text-amber-700'
+                  }`}>
+                    {property.status === 'case' && 'Under legal case — transactions blocked.'}
+                    {property.status === 'inactive' && 'Inactive property — transactions blocked.'}
+                    {property.status === 'pending' && 'Pending verification — transactions blocked.'}
+                  </p>
+                )}
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-2 text-body"><MapPin size={16} /> {property.blockName}</div>
                   <div className="flex items-center gap-2 text-body"><Maximize2 size={16} /> {property.plotSize}</div>

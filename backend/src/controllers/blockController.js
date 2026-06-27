@@ -1,7 +1,8 @@
 import Block from '../models/Block.js';
 import Property from '../models/Property.js';
 import { asyncHandler } from '../middleware/validate.js';
-import { recalculateBlockStats, recalculateAllBlockStats, countPropertiesForBlock } from '../utils/blockStats.js';
+import { recalculateBlockStats, recalculateAllBlockStats, countPropertiesForBlock, blockPropertyFilter } from '../utils/blockStats.js';
+import { deleteAllPropertiesForBlock } from '../utils/propertyCleanup.js';
 
 export const getBlocks = asyncHandler(async (req, res) => {
   await recalculateAllBlockStats();
@@ -15,7 +16,7 @@ export const getBlock = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Block not found' });
   }
 
-  const properties = await Property.find({ block: block._id })
+  const properties = await Property.find(blockPropertyFilter(block))
     .populate('currentOwner', 'fullName cnic')
     .sort({ propertyNumber: 1 });
 
@@ -45,15 +46,31 @@ export const deleteBlock = asyncHandler(async (req, res) => {
   }
 
   const propertyCount = await countPropertiesForBlock(block);
-  if (propertyCount > 0) {
+  const force = req.query.force === 'true';
+
+  if (propertyCount > 0 && !force) {
     return res.status(400).json({
       success: false,
-      message: `Cannot delete block — ${propertyCount} propert${propertyCount === 1 ? 'y' : 'ies'} still linked to this block`,
+      code: 'BLOCK_HAS_PROPERTIES',
+      propertyCount,
+      message: `This block has ${propertyCount} linked propert${propertyCount === 1 ? 'y' : 'ies'}. Confirm delete to remove the block and all its properties.`,
     });
   }
 
+  let deletedProperties = 0;
+  if (propertyCount > 0) {
+    deletedProperties = await deleteAllPropertiesForBlock(block);
+  }
+
   await Block.findByIdAndDelete(block._id);
-  res.json({ success: true, message: 'Block deleted' });
+
+  res.json({
+    success: true,
+    message:
+      deletedProperties > 0
+        ? `Block deleted along with ${deletedProperties} propert${deletedProperties === 1 ? 'y' : 'ies'}`
+        : 'Block deleted',
+  });
 });
 
 export const refreshBlockStats = asyncHandler(async (req, res) => {

@@ -3,6 +3,8 @@ import {
   getSaleRequests,
   getMySaleRequests,
   createSaleRequest,
+  createSellerSale,
+  createAdminSale,
   approveSaleRequest,
   rejectSaleRequest,
   getMyOwnershipPeriods,
@@ -16,6 +18,8 @@ router.get('/my-periods', protect, getMyOwnershipPeriods);
 router.get('/my-requests', protect, getMySaleRequests);
 router.get('/lookup', protect, lookupMyProperty);
 router.post('/request', protect, createSaleRequest);
+router.post('/sell', protect, createSellerSale);
+router.post('/admin', protect, adminOnly, createAdminSale);
 router.get('/', protect, adminOnly, getSaleRequests);
 router.post('/:id/approve', protect, adminOnly, approveSaleRequest);
 router.post('/:id/reject', protect, adminOnly, rejectSaleRequest);

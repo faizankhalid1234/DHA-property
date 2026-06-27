@@ -260,4 +260,43 @@
   .dash-skeleton {
     @apply bg-white rounded-2xl border border-slate-200 animate-pulse;
   }
+
+  /* Property management */
+  .prop-kpi-grid {
+    @apply grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6;
+  }
+  .prop-kpi {
+    @apply bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm
+           hover:shadow-md transition-all duration-200;
+  }
+  .prop-kpi-value {
+    @apply text-2xl font-bold text-navy tabular-nums mt-1;
+  }
+  .prop-kpi-label {
+    @apply text-xs font-semibold text-slate-500 uppercase tracking-wide;
+  }
+  .prop-filter-bar {
+    @apply flex flex-wrap gap-2 mb-6;
+  }
+  .prop-filter-btn {
+    @apply px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 bg-white
+           text-slate-600 hover:border-royal/30 hover:text-royal transition-all;
+  }
+  .prop-filter-btn.active {
+    @apply bg-gradient-to-r from-royal to-blue-800 text-white border-transparent shadow-md shadow-royal/20;
+  }
+  .prop-owner-card {
+    @apply flex items-center gap-3 min-w-0;
+  }
+  .prop-owner-avatar {
+    @apply w-9 h-9 rounded-full bg-gradient-to-br from-royal to-blue-600 text-white
+           text-xs font-bold flex items-center justify-center shrink-0 shadow-sm;
+  }
+  .prop-owner-empty {
+    @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-slate-300
+           bg-slate-50 text-slate-500 text-sm font-medium;
+  }
+  .prop-meta {
+    @apply text-xs text-slate-400 mt-0.5 truncate;
+  }
 }

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { Building2, History, Search, ShoppingCart, Calendar, Users } from 'lucide-react';
+import { Building2, History, Search, ShoppingCart, Calendar, Users, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '../services/api';
+import api, { getApiError } from '../services/api';
 import StatusBadge from '../components/StatusBadge';
 import OwnershipRecordsPanel from '../components/OwnershipRecordsPanel';
 
@@ -16,12 +16,15 @@ export default function Dashboard() {
   const [lookupResult, setLookupResult] = useState(null);
   const [ownerLookup, setOwnerLookup] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sellModal, setSellModal] = useState(null);
+  const [sellForm, setSellForm] = useState({ buyerEmail: '', notes: '' });
+  const [selling, setSelling] = useState(false);
 
   const loadData = () => {
     setLoading(true);
     api.get('/properties/my-properties')
       .then((r) => setData(r.data.data || { current: [], past: [], saleRequests: [] }))
-      .catch(() => toast.error('Failed to load data'))
+      .catch((err) => toast.error(getApiError(err)))
       .finally(() => setLoading(false));
   };
 
@@ -49,11 +52,37 @@ export default function Dashboard() {
   const handleBuyRequest = async (propertyId) => {
     try {
       await api.post('/sales/request', { propertyId });
-      toast.success('Buy request sent to admin — seller/buyer approval pending');
+      toast.success('Buy request sent — awaiting admin approval');
       loadData();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Request failed');
+      toast.error(getApiError(err));
     }
+  };
+
+  const handleSellProperty = async (e) => {
+    e.preventDefault();
+    if (!sellModal) return;
+    setSelling(true);
+    try {
+      await api.post('/sales/sell', {
+        propertyId: sellModal._id,
+        buyerEmail: sellForm.buyerEmail.trim(),
+        notes: sellForm.notes,
+      });
+      toast.success('Sale request sent — admin will approve the transfer');
+      setSellModal(null);
+      setSellForm({ buyerEmail: '', notes: '' });
+      loadData();
+    } catch (err) {
+      toast.error(getApiError(err));
+    } finally {
+      setSelling(false);
+    }
+  };
+
+  const openSellModal = (property) => {
+    setSellModal(property);
+    setSellForm({ buyerEmail: '', notes: '' });
   };
 
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-PK', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
@@ -121,9 +150,31 @@ export default function Dashboard() {
                           <p className="text-body"><span className="text-emerald-600 dark:text-emerald-400">Buyer:</span> {p.saleInfo.buyer}</p>
                         </div>
                       )}
+                      {p.status !== 'active' && (
+                        <div className={`mt-3 p-3 rounded-lg border text-sm ${
+                          p.status === 'case'
+                            ? 'bg-purple-50 dark:bg-purple-950/50 border-purple-100 dark:border-purple-900 text-purple-800 dark:text-purple-200'
+                            : p.status === 'inactive'
+                              ? 'bg-red-50 dark:bg-red-950/50 border-red-100 dark:border-red-900 text-red-800 dark:text-red-200'
+                              : 'bg-amber-50 dark:bg-amber-950/50 border-amber-100 dark:border-amber-900 text-amber-800 dark:text-amber-200'
+                        }`}>
+                          {p.status === 'case' && 'Legal case — selling is blocked until admin resolves.'}
+                          {p.status === 'inactive' && 'Property inactive — selling is blocked.'}
+                          {p.status === 'pending' && 'Verification pending — selling is blocked until status is Active.'}
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-col items-end gap-2">
                       <StatusBadge status={p.status} />
+                      {p.marketStatus !== 'sale_pending' && p.status === 'active' && (
+                        <button
+                          type="button"
+                          onClick={() => openSellModal(p)}
+                          className="btn-gold text-sm px-4 py-2 flex items-center gap-1"
+                        >
+                          <Tag size={14} /> Sell Property
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => {
@@ -230,7 +281,9 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  {lookupResult.property && !lookupResult.isOwner && lookupResult.property.currentOwner && lookupResult.property.marketStatus !== 'sale_pending' && (
+                  {lookupResult.property && !lookupResult.isOwner && lookupResult.property.currentOwner
+                    && lookupResult.property.marketStatus !== 'sale_pending'
+                    && lookupResult.property.status === 'active' && (
                     <button onClick={() => handleBuyRequest(lookupResult.property._id)} className="btn-gold">
                       Want to buy this property? Submit a request
                     </button>
@@ -241,6 +294,48 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {sellModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="glass-card max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-heading mb-1">Sell Property</h3>
+            <p className="text-sm text-muted mb-4">
+              {sellModal.propertyNumber} — {sellModal.blockName}
+            </p>
+            <p className="text-xs text-muted mb-4 p-3 surface rounded-lg">
+              Enter the buyer&apos;s email. They must already be added as a customer by admin. After you submit, admin will approve the sale.
+            </p>
+            <form onSubmit={handleSellProperty} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-body mb-1">Buyer Email</label>
+                <input
+                  type="email"
+                  className="input-field w-full"
+                  placeholder="buyer@email.com"
+                  required
+                  value={sellForm.buyerEmail}
+                  onChange={(e) => setSellForm({ ...sellForm, buyerEmail: e.target.value })}
+                />
+              </div>
+              <textarea
+                className="input-field w-full"
+                placeholder="Notes (optional)"
+                rows={2}
+                value={sellForm.notes}
+                onChange={(e) => setSellForm({ ...sellForm, notes: e.target.value })}
+              />
+              <div className="flex gap-3">
+                <button type="submit" className="btn-primary flex-1" disabled={selling}>
+                  {selling ? 'Submitting...' : 'Submit Sale Request'}
+                </button>
+                <button type="button" onClick={() => setSellModal(null)} className="btn-outline flex-1">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

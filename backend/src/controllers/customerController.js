@@ -93,13 +93,14 @@ export const createCustomer = asyncHandler(async (req, res) => {
     email: normalizedEmail,
     address: address.trim(),
     profileImage,
+    isVerified: true,
     createdBy: req.user._id,
   });
 
   res.status(201).json({
     success: true,
     data: customer,
-    message: 'Customer added. They can register on the website using this email to set their password.',
+    message: 'Customer added and verified. They can register on the website using this email.',
   });
 });
 

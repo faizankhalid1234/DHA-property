@@ -46,17 +46,47 @@ const removeStaleLock = (dbPath) => {
   }
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const connectPersistentUri = async (timeoutMs = 3000) =>
+  tryConnect(PERSISTENT_MONGO_URI, { serverSelectionTimeoutMS: timeoutMs }, 'persistent-local');
+
+const connectPersistentWithRetry = async (attempts = 5, delayMs = 1500) => {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await connectPersistentUri(3000);
+    } catch {
+      if (i < attempts - 1) await sleep(delayMs);
+    }
+  }
+  throw new Error('Could not connect to persistent local database');
+};
+
 const startPersistentLocalDb = async () => {
   fs.mkdirSync(PERSISTENT_DB_PATH, { recursive: true });
 
-  // Reuse already-running local database from a previous backend session
   try {
-    return await tryConnect(PERSISTENT_MONGO_URI, { serverSelectionTimeoutMS: 2000 }, 'persistent-local');
+    return await connectPersistentWithRetry(3);
   } catch {
-    // Not running yet — start a new local database process
+    // Not running yet — may need to wait for another backend instance or start fresh
   }
 
-  removeStaleLock(PERSISTENT_DB_PATH);
+  const lockPath = path.join(PERSISTENT_DB_PATH, 'mongod.lock');
+  if (fs.existsSync(lockPath)) {
+    try {
+      return await connectPersistentWithRetry(10, 1000);
+    } catch {
+      removeStaleLock(PERSISTENT_DB_PATH);
+    }
+  } else {
+    removeStaleLock(PERSISTENT_DB_PATH);
+  }
+
+  try {
+    return await connectPersistentWithRetry(2);
+  } catch {
+    // continue to start embedded mongod
+  }
 
   console.warn('📦 Starting persistent local database...');
   console.warn(`   Data folder: ${PERSISTENT_DB_PATH}`);
@@ -71,11 +101,10 @@ const startPersistentLocalDb = async () => {
       },
     });
 
-    return await tryConnect(PERSISTENT_MONGO_URI, { serverSelectionTimeoutMS: 5000 }, 'persistent-local');
+    return await connectPersistentUri(5000);
   } catch (error) {
-    // Last attempt: connect again in case another process started meanwhile
     try {
-      return await tryConnect(PERSISTENT_MONGO_URI, { serverSelectionTimeoutMS: 3000 }, 'persistent-local');
+      return await connectPersistentWithRetry(5, 1000);
     } catch {
       console.error(`❌ Could not start persistent database: ${error.message}`);
       console.error('   Close other backend terminals and try again.');

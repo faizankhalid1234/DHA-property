@@ -7,6 +7,7 @@ import api from '../services/api';
 export default function Blocks() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: '', description: '' });
+  const [deletingId, setDeletingId] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: blocks = [], isLoading } = useQuery({
@@ -20,18 +21,50 @@ export default function Blocks() {
     onError: (err) => toast.error(err.response?.data?.message || 'Failed'),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/blocks/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['blocks']);
-      toast.success('Block deleted');
-    },
-    onError: (err) => toast.error(err.response?.data?.message || 'Cannot delete this block'),
-  });
+  const getPropertyCount = (block) => (block.totalPlots || 0) + (block.totalHouses || 0);
 
-  const handleDelete = (block) => {
-    if (window.confirm(`Delete block "${block.name}"? This cannot be undone.`)) {
-      deleteMutation.mutate(block._id);
+  const handleDelete = async (block) => {
+    const count = getPropertyCount(block);
+    const baseMsg =
+      count > 0
+        ? `Delete "${block.name}" and all ${count} linked propert${count === 1 ? 'y' : 'ies'}?`
+        : `Delete block "${block.name}"?`;
+
+    if (!window.confirm(`${baseMsg}\n\nThis cannot be undone.`)) return;
+
+    setDeletingId(block._id);
+    try {
+      const force = count > 0;
+      let res = await api.delete(`/blocks/${block._id}${force ? '?force=true' : ''}`);
+
+      queryClient.invalidateQueries(['blocks']);
+      queryClient.invalidateQueries(['properties']);
+      toast.success(res.data?.message || 'Block deleted');
+    } catch (err) {
+      const data = err.response?.data;
+      if (data?.code === 'BLOCK_HAS_PROPERTIES') {
+        const n = data.propertyCount || 0;
+        if (
+          window.confirm(
+            `"${block.name}" has ${n} linked propert${n === 1 ? 'y' : 'ies'}.\n\nDelete block and all properties?`
+          )
+        ) {
+          try {
+            const res = await api.delete(`/blocks/${block._id}?force=true`);
+            queryClient.invalidateQueries(['blocks']);
+            queryClient.invalidateQueries(['properties']);
+            toast.success(res.data?.message || 'Block deleted');
+            return;
+          } catch (retryErr) {
+            toast.error(retryErr.response?.data?.message || 'Delete failed');
+            return;
+          }
+        }
+        return;
+      }
+      toast.error(data?.message || 'Cannot delete this block');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -48,41 +81,51 @@ export default function Blocks() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {isLoading ? <p>Loading...</p> : blocks.map((block) => (
-          <div key={block._id} className="stat-card relative">
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <h3 className="text-lg font-bold text-navy">{block.name}</h3>
-              <button
-                type="button"
-                onClick={() => handleDelete(block)}
-                disabled={deleteMutation.isPending}
-                className="admin-action-btn text-red-500 shrink-0"
-                title="Delete block"
-              >
-                <Trash2 size={18} />
-              </button>
+        {isLoading ? <p>Loading...</p> : blocks.map((block) => {
+          const totalProperties = getPropertyCount(block);
+          return (
+            <div key={block._id} className="stat-card relative">
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <div>
+                  <h3 className="text-lg font-bold text-navy">{block.name}</h3>
+                  {totalProperties > 0 && (
+                    <p className="text-xs text-amber-600 font-medium mt-0.5">
+                      {totalProperties} propert{totalProperties === 1 ? 'y' : 'ies'} linked
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(block)}
+                  disabled={deletingId === block._id}
+                  className="admin-action-btn text-red-500 shrink-0"
+                  title="Delete block"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mb-4">{block.description}</p>
+              <div className="grid grid-cols-2 gap-3 text-center">
+                <div className="bg-blue-50 rounded-lg p-2">
+                  <p className="text-lg font-bold text-royal">{block.totalPlots || 0}</p>
+                  <p className="text-xs text-gray-500">Plots</p>
+                </div>
+                <div className="bg-emerald-50 rounded-lg p-2">
+                  <p className="text-lg font-bold text-emerald-600">{block.totalHouses || 0}</p>
+                  <p className="text-xs text-gray-500">Houses</p>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-2">
+                  <p className="text-lg font-bold text-amber-600">{block.availableProperties || 0}</p>
+                  <p className="text-xs text-gray-500">Available</p>
+                </div>
+                <div className="bg-red-50 rounded-lg p-2">
+                  <p className="text-lg font-bold text-red-600">{block.soldProperties || 0}</p>
+                  <p className="text-xs text-gray-500">Sold</p>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-gray-400 mb-4">{block.description}</p>
-            <div className="grid grid-cols-2 gap-3 text-center">
-              <div className="bg-blue-50 rounded-lg p-2">
-                <p className="text-lg font-bold text-royal">{block.totalPlots || 0}</p>
-                <p className="text-xs text-gray-500">Plots</p>
-              </div>
-              <div className="bg-emerald-50 rounded-lg p-2">
-                <p className="text-lg font-bold text-emerald-600">{block.totalHouses || 0}</p>
-                <p className="text-xs text-gray-500">Houses</p>
-              </div>
-              <div className="bg-amber-50 rounded-lg p-2">
-                <p className="text-lg font-bold text-amber-600">{block.availableProperties || 0}</p>
-                <p className="text-xs text-gray-500">Available</p>
-              </div>
-              <div className="bg-red-50 rounded-lg p-2">
-                <p className="text-lg font-bold text-red-600">{block.soldProperties || 0}</p>
-                <p className="text-xs text-gray-500">Sold</p>
-              </div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {showModal && (
